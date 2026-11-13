@@ -67,6 +67,7 @@ describe('Protecții generale', () => {
       assert.match(csp, /frame-ancestors 'none'/);
       assert.equal(res.headers['x-content-type-options'], 'nosniff');
       assert.equal(res.headers['x-powered-by'], undefined);
+      assert.match(res.headers['permissions-policy'], /camera=\(\)/);
     }
   });
 
@@ -88,8 +89,10 @@ describe('Protecții generale', () => {
     assert.equal(unknown.status, 404);
     assert.deepEqual(unknown.body, { error: 'Resursa nu există.' });
 
-    for (const path of ['/.env', '/package.json', '/src/app.js', '/data/filme.db', '/%2e%2e/.env']) {
-      assert.equal((await request(app).get(path)).status, 404, path);
+    for (const path of ['/.env', '/package.json', '/src/app.js', '/data/filme.db', '/%2e%2e/.env', '/uploads/posters/../../.env']) {
+      const res = await request(app).get(path);
+      assert.equal(res.status, 404, path);
+      assert.match(res.text, /Pagina nu există/, path);
     }
   });
 });

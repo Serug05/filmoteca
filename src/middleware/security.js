@@ -1,9 +1,12 @@
 import helmet from 'helmet';
 
+// Aplicația nu folosește camera, microfonul, locația etc.; browserul le refuză pentru orice script.
+const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), payment=(), usb=()';
+
 // Antete HTTP de securitate. CSP-ul permite doar scripturi, stiluri și imagini de pe propriul server:
 // chiar dacă cineva reușește să strecoare HTML în pagină, un <script> inline nu va rula.
 export function securityHeaders(config) {
-  return helmet({
+  const helmetMiddleware = helmet({
     contentSecurityPolicy: {
       useDefaults: false,
       directives: {
@@ -22,6 +25,11 @@ export function securityHeaders(config) {
     },
     strictTransportSecurity: config.cookieSecure ? undefined : false,
   });
+
+  return (req, res, next) => {
+    res.set('Permissions-Policy', PERMISSIONS_POLICY);
+    helmetMiddleware(req, res, next);
+  };
 }
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);

@@ -47,6 +47,11 @@ export function createApp({ db, config }) {
   api.use(apiNotFound);
 
   app.use('/api', api);
+
+  // Orice altă adresă: pagina 404 proprie, fără detalii despre server.
+  app.use((req, res) => {
+    res.status(404).sendFile(path.join(ROOT_DIR, 'public', '404.html'));
+  });
   app.use(errorHandler);
   return app;
 }

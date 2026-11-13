@@ -67,6 +67,7 @@ export function toEntryJson(entry) {
       id: entry.film_id,
       title: entry.title,
       year: entry.year,
+      genre: entry.genre,
       genreLabel: GENRES[entry.genre],
       posterUrl: entry.poster ? `/uploads/posters/${entry.poster}` : null,
     },

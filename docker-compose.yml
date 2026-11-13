@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    init: true
+    ports:
+      - "3000:3000"
+    # Baza de date și posterele rămân salvate între reporniri.
+    volumes:
+      - filmoteca-data:/app/data
+      - filmoteca-uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  filmoteca-data:
+  filmoteca-uploads:

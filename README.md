@@ -2,7 +2,7 @@
 
 Aplicație web pentru o listă de filme: un catalog public de filme, recenzii cu note de la 1 la 5 și o listă privată de vizionare pentru fiecare utilizator. Proiect pentru cursul de Aplicații Web (tema 6, „Listă de filme de văzut”) și pentru Provocarea 19/20.
 
-> **Stadiu:** etapa 5 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere), posterele, recenziile, căutarea, filtrarea și sortarea, lista privată de vizionare, profilul și administrarea (cu jurnal de audit).
+> **Stadiu:** etapa 6 din 7. Toate funcționalitățile sunt gata, iar aplicația pornește cu o singură comandă (npm sau Docker). Urmează SECURITY.md și verificarea finală de securitate.
 
 ## Roluri
 
@@ -26,20 +26,54 @@ Adminul **nu** poate: vedea listele private ale altora, scrie sau edita recenzii
 
 ## Rulare
 
+Aplicația pornește la **http://localhost:3000**. La prima pornire își creează singură fișierul `.env` (din `.env.example`) și, dacă baza de date e goală, o umple cu datele demo.
+
+### Varianta 1: Docker (o singură comandă)
+
+Necesită Docker cu Docker Compose.
+
+```bash
+docker compose up --build
+```
+
+Baza de date și posterele se păstrează în volume Docker între reporniri. Oprire: `Ctrl+C`, apoi `docker compose down`.
+
+### Varianta 2: Node.js
+
 Necesită Node.js 22 sau mai nou.
 
 ```bash
-npm install
-cp .env.example .env
-npm run seed
+npm ci --ignore-scripts
 npm start
 ```
 
-Aplicația pornește la http://localhost:3000. `npm run seed` resetează baza de date și o umple cu date demo.
+`--ignore-scripts` folosește modulele native deja compilate din pachete (pentru Linux, Windows și Mac cu Apple Silicon), fără să fie nevoie de un compilator. Pe un Mac cu procesor Intel, folosește `npm ci` simplu.
+
+### Alte comenzi
+
+| Comandă         | Ce face |
+|-----------------|---------|
+| `npm run seed`  | resetează baza de date la datele demo (șterge tot ce s-a adăugat) |
+| `npm run dev`   | pornește serverul și îl repornește la fiecare modificare de cod |
+| `npm test`      | rulează testele automate |
+
+### Setări (`.env`)
+
+| Variabilă             | Implicit         | Ce face |
+|-----------------------|------------------|---------|
+| `PORT`                | `3000`           | portul serverului |
+| `DB_PATH`             | `data/filme.db`  | fișierul bazei de date SQLite |
+| `UPLOADS_DIR`         | `uploads`        | folderul pentru postere |
+| `COOKIE_SECURE`       | `false`          | pune `true` când aplicația e servită prin HTTPS |
+| `SESSION_TTL_HOURS`   | `24`             | cât rămâne valabilă o sesiune |
+| `SEED_ADMIN_PASSWORD` | vezi `.env.example` | parola contului demo de admin |
+| `SEED_USER_PASSWORD`  | vezi `.env.example` | parola contului demo de utilizator |
+
+Dacă aplicația e publicată la o adresă publică, schimbă `SEED_ADMIN_PASSWORD` și `SEED_USER_PASSWORD` înainte de prima pornire: valorile implicite sunt publice în acest depozit.
 
 ## Conturi de test
 
-Create de `npm run seed`:
+Create automat la prima pornire (sau cu `npm run seed`):
 
 | Rol   | Email              | Parolă                                                            |
 |-------|--------------------|-------------------------------------------------------------------|
@@ -69,9 +103,12 @@ src/
   services/         parole (Argon2), cookie-ul de sesiune, permisiuni, postere, căutare
   validation/       schemele zod pentru datele primite
 public/             paginile HTML, CSS și JavaScript-ul din browser
-scripts/            scriptul de seed și datele demo
+scripts/            pregătirea la prima pornire (setup.js), seed-ul și datele demo
 tests/              testele automate
 uploads/            posterele încărcate (creat automat, nu intră în Git)
+data/               baza de date SQLite (creată automat, nu intră în Git)
+Dockerfile          imaginea aplicației
+docker-compose.yml  pornirea cu Docker
 ```
 
 ## Pagini
@@ -84,6 +121,7 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 | `/lista-mea.html`   | lista privată de vizionare: de văzut / văzute, cu notițe |
 | `/profil.html`      | profilul: emailul, statistici, schimbarea emailului și a parolei |
 | `/admin.html`       | doar pentru admin: raport, utilizatori, moderarea recenziilor, jurnal |
+| orice altă adresă   | pagina 404                                              |
 | `/login.html`       | autentificare                                           |
 | `/register.html`    | cont nou                                                |
 

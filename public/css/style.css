@@ -392,9 +392,20 @@ input[type="file"] {
 .poster-empty span {
   font-size: 3rem;
   font-weight: 800;
-  color: var(--accent);
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
+
+.poster-empty[data-genre="actiune"] { background: linear-gradient(160deg, #b23a2e, #2b1210); }
+.poster-empty[data-genre="animatie"] { background: linear-gradient(160deg, #2f8f9d, #13303a); }
+.poster-empty[data-genre="comedie"] { background: linear-gradient(160deg, #d39a1f, #3a2a0c); }
+.poster-empty[data-genre="documentar"] { background: linear-gradient(160deg, #5c7a3a, #1c2612); }
+.poster-empty[data-genre="drama"] { background: linear-gradient(160deg, #6a4c93, #1f1630); }
+.poster-empty[data-genre="fantasy"] { background: linear-gradient(160deg, #3d7a5a, #10261c); }
+.poster-empty[data-genre="horror"] { background: linear-gradient(160deg, #7a1f2b, #120609); }
+.poster-empty[data-genre="romantic"] { background: linear-gradient(160deg, #c2577a, #3a1422); }
+.poster-empty[data-genre="sf"] { background: linear-gradient(160deg, #2e5fa8, #0d1a33); }
+.poster-empty[data-genre="thriller"] { background: linear-gradient(160deg, #4a5566, #111418); }
 
 .pagination {
   display: flex;

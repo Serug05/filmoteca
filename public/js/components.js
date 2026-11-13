@@ -62,7 +62,9 @@ export function posterElement(film, extraClass = '') {
     image.loading = 'lazy';
     frame.append(image);
   } else {
+    // Fără poster: un fundal colorat după gen, cu inițiala titlului.
     frame.classList.add('poster-empty');
+    frame.dataset.genre = film.genre;
     frame.setAttribute('aria-hidden', 'true');
     frame.append(element('span', '', [...film.title.trim()][0]?.toUpperCase() ?? '?'));
   }
