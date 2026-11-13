@@ -27,5 +27,15 @@ export function createAuthLimiters() {
     }),
 
     register: rateLimit({ ...common, windowMs: ONE_HOUR, limit: 20 }),
+
+    // Pe utilizator: limitează încercările de a ghici parola actuală dintr-o sesiune deschisă
+    // (la schimbarea emailului sau a parolei). Rulează doar după requireAuth.
+    account: rateLimit({
+      ...common,
+      windowMs: FIFTEEN_MINUTES,
+      limit: 10,
+      skipSuccessfulRequests: true,
+      keyGenerator: (req) => `user:${req.user.id}`,
+    }),
   };
 }

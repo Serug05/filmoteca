@@ -1,5 +1,5 @@
 import { api } from './api.js';
-import { canManage, element, formatDate, idFromQuery, posterElement, ratingSummary, stars } from './components.js';
+import { canManage, element, formatDate, formatDay, idFromQuery, posterElement, ratingSummary, stars } from './components.js';
 import { clearErrors, setBusy, showErrors } from './forms.js';
 import { renderNav } from './nav.js';
 
@@ -41,6 +41,52 @@ async function deleteFilm() {
     location.replace('/');
   } catch (error) {
     pageError.textContent = error.message;
+  }
+}
+
+// ---------- Lista mea (privată) ----------
+
+const watch = {
+  box: document.querySelector('[data-watch]'),
+  state: document.querySelector('[data-watch-state]'),
+  add: document.querySelector('[data-watch-add]'),
+  seen: document.querySelector('[data-watch-seen]'),
+  link: document.querySelector('[data-watch-link]'),
+  error: document.querySelector('[data-watch-error]'),
+};
+let watchEntry = null;
+
+function renderWatch() {
+  if (!watchEntry) {
+    watch.state.textContent = 'Filmul nu este în lista ta.';
+  } else if (watchEntry.status === 'vazut') {
+    watch.state.textContent = `În lista ta: văzut pe ${formatDay(watchEntry.watchedOn)}.`;
+  } else {
+    watch.state.textContent = 'În lista ta: de văzut.';
+  }
+  watch.add.hidden = Boolean(watchEntry);
+  watch.seen.hidden = watchEntry?.status === 'vazut';
+  watch.link.hidden = !watchEntry;
+  watch.box.hidden = false;
+}
+
+async function loadWatch() {
+  if (!user) return;
+  const { entries } = await api(`/me/watchlist?film=${filmId}`);
+  watchEntry = entries[0] ?? null;
+  renderWatch();
+}
+
+async function updateWatch(status) {
+  watch.error.textContent = '';
+  try {
+    const { entry } = watchEntry
+      ? await api(`/me/watchlist/${watchEntry.id}`, { method: 'PUT', body: { status, note: watchEntry.note } })
+      : await api('/me/watchlist', { method: 'POST', body: { filmId, status } });
+    watchEntry = entry;
+    renderWatch();
+  } catch (error) {
+    watch.error.textContent = error.message;
   }
 }
 
@@ -155,10 +201,13 @@ async function main() {
   document.querySelector('[data-delete]').addEventListener('click', deleteFilm);
   reviewForm.addEventListener('submit', saveReview);
   cancelEdit.addEventListener('click', () => refresh().catch((error) => { reviewsError.textContent = error.message; }));
+  watch.add.addEventListener('click', () => updateWatch('de_vazut'));
+  watch.seen.addEventListener('click', () => updateWatch('vazut'));
 
   try {
     if (!filmId) throw new Error('Filmul nu există.');
     await refresh();
+    await loadWatch();
   } catch (error) {
     pageError.textContent = error.message;
   }

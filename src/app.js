@@ -9,6 +9,7 @@ import { crossOriginGuard, securityHeaders } from './middleware/security.js';
 import { authRouter } from './routes/auth.routes.js';
 import { filmsRouter } from './routes/films.routes.js';
 import { genresRouter } from './routes/genres.routes.js';
+import { meRouter } from './routes/me.routes.js';
 import { reviewsRouter } from './routes/reviews.routes.js';
 
 // Construiește aplicația fără să o pornească; testele o folosesc direct, cu o bază de date în memorie.
@@ -35,7 +36,9 @@ export function createApp({ db, config }) {
     next();
   });
 
-  api.use('/auth', authRouter({ db, config, limiters: createAuthLimiters() }));
+  const limiters = createAuthLimiters();
+  api.use('/auth', authRouter({ db, config, limiters }));
+  api.use('/me', meRouter({ db, limiters }));
   api.use('/films', filmsRouter({ db, postersDir }));
   api.use('/genres', genresRouter());
   api.use(reviewsRouter({ db }));

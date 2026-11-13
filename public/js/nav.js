@@ -3,10 +3,11 @@ import { api } from './api.js';
 // Regulă pentru tot frontend-ul: textul venit de la server se pune în pagină doar cu
 // textContent (niciodată cu innerHTML), ca browserul să nu-l interpreteze ca HTML.
 
-function navLink(href, text) {
+function navLink(href, text, className) {
   const link = document.createElement('a');
   link.href = href;
   link.textContent = text;
+  if (className) link.className = className;
   if (location.pathname === href) link.setAttribute('aria-current', 'page');
   return link;
 }
@@ -26,10 +27,6 @@ export async function renderNav() {
   const items = [navLink('/', 'Catalog')];
 
   if (user) {
-    const name = document.createElement('span');
-    name.className = 'nav-user';
-    name.textContent = user.username;
-
     const logout = document.createElement('button');
     logout.type = 'button';
     logout.className = 'btn btn-ghost';
@@ -42,11 +39,23 @@ export async function renderNav() {
       }
     });
 
-    items.push(navLink('/film-form.html', 'Adaugă film'), name, logout);
+    items.push(
+      navLink('/film-form.html', 'Adaugă film'),
+      navLink('/lista-mea.html', 'Lista mea'),
+      navLink('/profil.html', user.username, 'nav-user'),
+      logout,
+    );
   } else {
     items.push(navLink('/login.html', 'Intră în cont'), navLink('/register.html', 'Cont nou'));
   }
 
   nav.replaceChildren(...items);
+  return user;
+}
+
+// Pentru paginile care au sens doar cu cont: trimite vizitatorul la autentificare.
+export async function requireUser() {
+  const user = await renderNav();
+  if (!user) location.replace('/login.html');
   return user;
 }

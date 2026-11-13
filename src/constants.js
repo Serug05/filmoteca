@@ -2,6 +2,9 @@ export const ROLES = Object.freeze({ USER: 'user', ADMIN: 'admin' });
 
 export const SESSION_COOKIE = 'sid';
 
+// Stările unei intrări din lista privată de vizionare.
+export const WATCH_STATUSES = Object.freeze({ de_vazut: 'De văzut', vazut: 'Văzut' });
+
 // Ordinile de sortare permise pentru catalog. Orice altă valoare e respinsă la validare.
 export const FILM_SORTS = Object.freeze(['recent', 'rating', 'year', 'title']);
 

@@ -1,5 +1,7 @@
 export function clearErrors(form) {
-  for (const slot of form.querySelectorAll('[data-error-for], [data-form-error]')) slot.textContent = '';
+  for (const slot of form.querySelectorAll('[data-error-for], [data-form-error], [data-form-success]')) {
+    slot.textContent = '';
+  }
   for (const field of form.querySelectorAll('[aria-invalid]')) field.removeAttribute('aria-invalid');
 }
 
@@ -18,6 +20,10 @@ export function showErrors(form, error) {
 
   const general = form.querySelector('[data-form-error]');
   general.textContent = fields._ ?? (markedField ? 'Verifică câmpurile marcate.' : error.message);
+}
+
+export function showSuccess(form, message) {
+  form.querySelector('[data-form-success]').textContent = message;
 }
 
 export function setBusy(form, busy) {

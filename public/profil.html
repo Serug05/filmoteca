@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profilul meu · Filmoteca</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/profile.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">Filmoteca</a>
+      <nav class="nav" data-nav aria-label="Navigare principală"></nav>
+    </div>
+  </header>
+
+  <main class="container profile-page">
+    <p class="form-error" data-page-error role="alert"></p>
+
+    <section class="card" data-profile hidden>
+      <h1>Profilul meu</h1>
+      <p class="muted">Datele de mai jos le vezi doar tu.</p>
+
+      <dl class="profile-data">
+        <dt>Nume de utilizator</dt>
+        <dd data-username></dd>
+        <dt>Email</dt>
+        <dd data-email></dd>
+        <dt>Rol</dt>
+        <dd data-role></dd>
+        <dt>Membru din</dt>
+        <dd data-since></dd>
+      </dl>
+
+      <ul class="stats">
+        <li><strong data-stat="films"></strong> filme adăugate</li>
+        <li><strong data-stat="reviews"></strong> recenzii</li>
+        <li><strong data-stat="watchlist"></strong> filme în lista mea</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Schimbă emailul</h2>
+      <form data-email-form novalidate>
+        <p class="form-error" data-form-error role="alert"></p>
+        <p class="form-success" data-form-success role="status"></p>
+
+        <label for="new-email">Email nou</label>
+        <input id="new-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <p class="field-error" data-error-for="email"></p>
+
+        <label for="email-current-password">Parola actuală</label>
+        <input id="email-current-password" name="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+        <p class="field-error" data-error-for="currentPassword"></p>
+
+        <button type="submit" class="btn btn-primary">Salvează emailul</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Schimbă parola</h2>
+      <p class="muted">După schimbare, toate celelalte sesiuni deschise ale contului se închid.</p>
+      <form data-password-form novalidate>
+        <p class="form-error" data-form-error role="alert"></p>
+        <p class="form-success" data-form-success role="status"></p>
+
+        <label for="password-current">Parola actuală</label>
+        <input id="password-current" name="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+        <p class="field-error" data-error-for="currentPassword"></p>
+
+        <label for="password-new">Parola nouă</label>
+        <input id="password-new" name="newPassword" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+        <p class="hint">Cel puțin 10 caractere.</p>
+        <p class="field-error" data-error-for="newPassword"></p>
+
+        <label for="password-confirm">Confirmă parola nouă</label>
+        <input id="password-confirm" name="confirm" type="password" autocomplete="new-password" maxlength="128" required>
+        <p class="field-error" data-error-for="confirm"></p>
+
+        <button type="submit" class="btn btn-primary">Schimbă parola</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

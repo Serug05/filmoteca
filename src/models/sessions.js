@@ -32,6 +32,12 @@ export function deleteSession(db, token) {
   db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(hashToken(token));
 }
 
+// După schimbarea parolei: toate celelalte sesiuni ale utilizatorului se închid
+// (de ex. un dispozitiv pierdut), doar cea curentă rămâne.
+export function deleteOtherSessions(db, userId, keepToken) {
+  db.prepare('DELETE FROM sessions WHERE user_id = ? AND token_hash != ?').run(userId, hashToken(keepToken));
+}
+
 export function deleteExpiredSessions(db) {
   db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(Date.now());
 }

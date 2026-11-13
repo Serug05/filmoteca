@@ -2,7 +2,7 @@
 
 Aplicație web pentru o listă de filme: un catalog public de filme, recenzii cu note de la 1 la 5 și o listă privată de vizionare pentru fiecare utilizator. Proiect pentru cursul de Aplicații Web (tema 6, „Listă de filme de văzut”) și pentru Provocarea 19/20.
 
-> **Stadiu:** etapa 3 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere), posterele, recenziile și căutarea, filtrarea și sortarea.
+> **Stadiu:** etapa 4 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere), posterele, recenziile, căutarea, filtrarea și sortarea, lista privată de vizionare și profilul.
 
 ## Tehnologii
 
@@ -53,8 +53,8 @@ src/
   config.js         citește setările din .env
   constants.js      roluri, genuri de film, numele cookie-ului
   db/               schema SQL și conexiunea la baza de date
-  models/           interogările pe tabele (users, sessions, films, reviews)
-  routes/           rutele API (auth, films, reviews, genres)
+  models/           interogările pe tabele (users, sessions, films, reviews, watchlist)
+  routes/           rutele API (auth, films, reviews, me, genres)
   middleware/       autentificare, roluri, validare, CSRF, limite de încercări, încărcări, erori
   services/         parole (Argon2), cookie-ul de sesiune, permisiuni, postere, căutare
   validation/       schemele zod pentru datele primite
@@ -71,6 +71,8 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 | `/`                 | catalogul de filme: căutare, filtru pe gen, sortare, paginare |
 | `/film.html?id=…`   | detaliile unui film și recenziile lui; editare și ștergere pentru proprietar |
 | `/film-form.html`   | adăugarea sau editarea (`?id=…`) unui film, cu poster    |
+| `/lista-mea.html`   | lista privată de vizionare: de văzut / văzute, cu notițe |
+| `/profil.html`      | profilul: emailul, statistici, schimbarea emailului și a parolei |
 | `/login.html`       | autentificare                                           |
 | `/register.html`    | cont nou                                                |
 
@@ -93,6 +95,15 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 | PUT    | `/api/reviews/:id`       | da, doar autorul        | editează recenzia                                     |
 | DELETE | `/api/reviews/:id`       | da, autorul sau admin   | șterge recenzia                                       |
 | GET    | `/api/genres`            | nu                      | lista de genuri                                       |
+| GET    | `/api/me/profile`        | da                      | profilul propriu (email, statistici)                  |
+| PUT    | `/api/me/profile`        | da + parola actuală     | schimbă emailul                                       |
+| PUT    | `/api/me/password`       | da + parola actuală     | schimbă parola și închide celelalte sesiuni           |
+| GET    | `/api/me/watchlist`      | da                      | lista privată (`?status=de_vazut\|vazut`, `?film=id`)  |
+| POST   | `/api/me/watchlist`      | da                      | adaugă un film în listă                               |
+| PUT    | `/api/me/watchlist/:id`  | da, doar proprietarul   | schimbă starea, data vizionării sau notița             |
+| DELETE | `/api/me/watchlist/:id`  | da, doar proprietarul   | scoate filmul din listă                               |
+
+Rutele `/api/me/...` lucrează doar cu datele utilizatorului conectat. O intrare din lista altcuiva răspunde 404, ca și cum n-ar exista, ca să nu se afle nici măcar că există.
 
 Parametrii pentru `GET /api/films`: `q` (caută în titlu, fără să țină cont de majuscule sau diacritice), `genre` (un gen din `/api/genres`), `sort` (`recent`, `rating`, `year` sau `title`) și `page`.
 

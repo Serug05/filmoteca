@@ -46,6 +46,12 @@ export function formatDate(sqliteDate) {
   });
 }
 
+// O zi calendaristică („2026-09-14”), afișată fără să fie mutată de fusul orar.
+export function formatDay(isoDay) {
+  const [year, month, day] = isoDay.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 export function posterElement(film, extraClass = '') {
   const frame = element('div', `poster ${extraClass}`.trim());
 

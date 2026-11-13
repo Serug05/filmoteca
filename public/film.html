@@ -29,6 +29,16 @@
         <p class="film-description" data-description></p>
         <p class="muted">Adăugat de <strong data-owner></strong></p>
 
+        <div class="watch-widget" data-watch hidden>
+          <p class="watch-state" data-watch-state></p>
+          <div class="actions">
+            <button class="btn btn-primary" type="button" data-watch-add>Adaugă la „De văzut”</button>
+            <button class="btn btn-ghost" type="button" data-watch-seen>Am văzut filmul</button>
+            <a class="btn btn-ghost" href="/lista-mea.html" data-watch-link hidden>Vezi lista mea</a>
+          </div>
+          <p class="form-error" data-watch-error role="alert"></p>
+        </div>
+
         <div class="actions" data-actions hidden>
           <a class="btn btn-ghost" data-edit>Editează</a>
           <button class="btn btn-danger" type="button" data-delete>Șterge filmul</button>
