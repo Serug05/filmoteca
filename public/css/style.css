@@ -455,6 +455,126 @@ input[type="file"] {
   margin-top: 20px;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+/* Căutare */
+
+.search-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.search-bar .btn {
+  margin-top: 0;
+}
+
+.film-card-rating {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Recenzii */
+
+.film-rating {
+  font-weight: 600;
+}
+
+.reviews {
+  max-width: 760px;
+  padding-bottom: 56px;
+}
+
+.reviews h2 {
+  font-size: 1.4rem;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 24px;
+}
+
+.review-form {
+  margin: 16px 0 24px;
+}
+
+.review-form h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0;
+}
+
+.review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.review-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.review-header .muted {
+  font-size: 0.85rem;
+}
+
+.stars {
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.review-body {
+  margin: 8px 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.review-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 760px) {
+  .search-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .search-bar input {
+    grid-column: 1 / -1;
+  }
+
+  .search-bar .btn {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 640px) {
   .film-detail {
     grid-template-columns: 1fr;

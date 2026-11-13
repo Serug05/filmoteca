@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { loadFilm as loadFilmFrom } from '../middleware/loaders.js';
 import { posterUpload } from '../middleware/upload.js';
 import { validateBody, validateQuery } from '../middleware/validate.js';
 import {
   createFilm,
   deleteFilm,
-  findFilmById,
   isUsedByOthers,
   listFilms,
   setFilmPoster,
@@ -14,10 +14,8 @@ import {
 } from '../models/films.js';
 import { canManage, isAdmin } from '../services/permissions.js';
 import { PosterError, processPoster, removePoster, savePoster } from '../services/posters.js';
-import { parseId } from '../validation/common.js';
 import { filmListQuerySchema, filmSchema } from '../validation/film.schemas.js';
 
-const NOT_FOUND = { error: 'Filmul nu există.' };
 const FORBIDDEN = { error: 'Poți modifica doar filmele adăugate de tine.' };
 const USED_BY_OTHERS = {
   error: 'Filmul este folosit deja de alți utilizatori (recenzii sau liste), așa că doar un administrator îl mai poate șterge.',
@@ -25,14 +23,7 @@ const USED_BY_OTHERS = {
 
 export function filmsRouter({ db, postersDir }) {
   const router = Router();
-
-  function loadFilm(req, res, next) {
-    const id = parseId(req.params.id);
-    const film = id && findFilmById(db, id);
-    if (!film) return res.status(404).json(NOT_FOUND);
-    req.film = film;
-    next();
-  }
+  const loadFilm = loadFilmFrom(db);
 
   // Verificarea proprietarului (apărarea contra IDOR): rulează pe server la fiecare modificare,
   // indiferent ce butoane arată sau ascunde interfața.

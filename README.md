@@ -2,7 +2,7 @@
 
 Aplicație web pentru o listă de filme: un catalog public de filme, recenzii cu note de la 1 la 5 și o listă privată de vizionare pentru fiecare utilizator. Proiect pentru cursul de Aplicații Web (tema 6, „Listă de filme de văzut”) și pentru Provocarea 19/20.
 
-> **Stadiu:** etapa 2 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere) și posterele.
+> **Stadiu:** etapa 3 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere), posterele, recenziile și căutarea, filtrarea și sortarea.
 
 ## Tehnologii
 
@@ -53,10 +53,10 @@ src/
   config.js         citește setările din .env
   constants.js      roluri, genuri de film, numele cookie-ului
   db/               schema SQL și conexiunea la baza de date
-  models/           interogările pe tabele (users, sessions, films)
-  routes/           rutele API (auth, films, genres)
+  models/           interogările pe tabele (users, sessions, films, reviews)
+  routes/           rutele API (auth, films, reviews, genres)
   middleware/       autentificare, roluri, validare, CSRF, limite de încercări, încărcări, erori
-  services/         parole (Argon2), cookie-ul de sesiune, permisiuni, postere
+  services/         parole (Argon2), cookie-ul de sesiune, permisiuni, postere, căutare
   validation/       schemele zod pentru datele primite
 public/             paginile HTML, CSS și JavaScript-ul din browser
 scripts/            scriptul de seed și datele demo
@@ -68,8 +68,8 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 
 | Pagină              | Ce conține                                              |
 |---------------------|---------------------------------------------------------|
-| `/`                 | catalogul de filme, cu paginare                          |
-| `/film.html?id=…`   | detaliile unui film; editare și ștergere pentru proprietar |
+| `/`                 | catalogul de filme: căutare, filtru pe gen, sortare, paginare |
+| `/film.html?id=…`   | detaliile unui film și recenziile lui; editare și ștergere pentru proprietar |
 | `/film-form.html`   | adăugarea sau editarea (`?id=…`) unui film, cu poster    |
 | `/login.html`       | autentificare                                           |
 | `/register.html`    | cont nou                                                |
@@ -82,12 +82,18 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 | POST   | `/api/auth/login`        | nu                      | autentificare                                         |
 | POST   | `/api/auth/logout`       | nu                      | închide sesiunea (o șterge de pe server)              |
 | GET    | `/api/auth/me`           | opțional                | utilizatorul conectat sau `null`                      |
-| GET    | `/api/films?page=`       | nu                      | lista de filme, câte 12 pe pagină                      |
+| GET    | `/api/films`             | nu                      | lista de filme, câte 12 pe pagină (vezi parametrii mai jos) |
 | GET    | `/api/films/:id`         | nu                      | detaliile unui film                                   |
 | POST   | `/api/films`             | da                      | adaugă un film (proprietar = utilizatorul conectat)   |
 | PUT    | `/api/films/:id`         | da, proprietar sau admin | editează filmul                                       |
 | DELETE | `/api/films/:id`         | da, proprietar sau admin | șterge filmul*                                        |
 | POST   | `/api/films/:id/poster`  | da, proprietar sau admin | încarcă posterul (JPG/PNG/WebP, max. 2 MB)            |
+| GET    | `/api/films/:id/reviews` | nu                      | recenziile unui film                                  |
+| POST   | `/api/films/:id/reviews` | da                      | scrie o recenzie (una per utilizator și film)         |
+| PUT    | `/api/reviews/:id`       | da, doar autorul        | editează recenzia                                     |
+| DELETE | `/api/reviews/:id`       | da, autorul sau admin   | șterge recenzia                                       |
 | GET    | `/api/genres`            | nu                      | lista de genuri                                       |
+
+Parametrii pentru `GET /api/films`: `q` (caută în titlu, fără să țină cont de majuscule sau diacritice), `genre` (un gen din `/api/genres`), `sort` (`recent`, `rating`, `year` sau `title`) și `page`.
 
 \* Proprietarul nu își poate șterge filmul dacă alți utilizatori l-au recenzat sau l-au pus în lista lor: altfel ar șterge, indirect, datele lor. În acest caz doar un administrator îl poate șterge.

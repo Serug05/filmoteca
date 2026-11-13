@@ -25,6 +25,26 @@
       <a class="btn btn-primary" href="/film-form.html" data-add-film hidden>Adaugă un film</a>
     </section>
 
+    <form class="search-bar" data-search-form role="search" action="/" method="get">
+      <label class="visually-hidden" for="q">Caută după titlu</label>
+      <input id="q" name="q" type="search" placeholder="Caută după titlu…" maxlength="100" autocomplete="off">
+
+      <label class="visually-hidden" for="genre">Gen</label>
+      <select id="genre" name="genre">
+        <option value="">Toate genurile</option>
+      </select>
+
+      <label class="visually-hidden" for="sort">Ordonează după</label>
+      <select id="sort" name="sort">
+        <option value="recent">Adăugate recent</option>
+        <option value="rating">Nota cea mai mare</option>
+        <option value="year">Anul apariției</option>
+        <option value="title">Titlu (A–Z)</option>
+      </select>
+
+      <button class="btn btn-primary" type="submit">Caută</button>
+    </form>
+
     <p class="form-error" data-page-error role="alert"></p>
     <ul class="film-grid" data-film-grid></ul>
     <nav class="pagination" data-pagination aria-label="Pagini"></nav>

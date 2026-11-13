@@ -25,6 +25,7 @@
       <div class="film-info">
         <h1 data-title></h1>
         <p class="film-meta" data-meta></p>
+        <p class="film-rating" data-rating></p>
         <p class="film-description" data-description></p>
         <p class="muted">Adăugat de <strong data-owner></strong></p>
 
@@ -34,6 +35,42 @@
         </div>
       </div>
     </article>
+
+    <section class="reviews" data-reviews hidden aria-labelledby="reviews-heading">
+      <h2 id="reviews-heading">Recenzii</h2>
+
+      <p class="muted" data-review-login hidden><a href="/login.html">Intră în cont</a> ca să scrii o recenzie.</p>
+
+      <form class="card review-form" data-review-form novalidate hidden>
+        <h3 data-review-form-title>Scrie o recenzie</h3>
+        <p class="form-error" data-form-error role="alert"></p>
+
+        <label for="rating">Nota</label>
+        <select id="rating" name="rating" required>
+          <option value="">Alege nota…</option>
+          <option value="5">5 – Excelent</option>
+          <option value="4">4 – Foarte bun</option>
+          <option value="3">3 – Bun</option>
+          <option value="2">2 – Slab</option>
+          <option value="1">1 – Foarte slab</option>
+        </select>
+        <p class="field-error" data-error-for="rating"></p>
+
+        <label for="body">Recenzia ta</label>
+        <textarea id="body" name="body" rows="4" maxlength="1000" required></textarea>
+        <p class="hint">Între 3 și 1000 de caractere. Recenzia este publică.</p>
+        <p class="field-error" data-error-for="body"></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Publică recenzia</button>
+          <button type="button" class="btn btn-ghost" data-review-cancel hidden>Renunță</button>
+        </div>
+      </form>
+
+      <p class="form-error" data-reviews-error role="alert"></p>
+      <p class="muted" data-reviews-empty hidden>Nicio recenzie încă.</p>
+      <ul class="review-list" data-review-list></ul>
+    </section>
   </main>
 </body>
 </html>

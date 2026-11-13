@@ -2,7 +2,7 @@
 
 export const MAX_POSTER_BYTES = 2 * 1024 * 1024;
 
-function element(tag, className, text) {
+export function element(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
@@ -17,6 +17,33 @@ export function idFromQuery() {
 
 export function canManage(user, film) {
   return Boolean(user) && (user.role === 'admin' || user.id === film.owner.id);
+}
+
+// Pluralul în română: „1 film”, „5 filme”, „20 de filme”, „101 filme”.
+export function plural(n, one, many) {
+  if (n === 1) return `1 ${one}`;
+  const rest = n % 100;
+  return n >= 20 && (rest === 0 || rest >= 20) ? `${n} de ${many}` : `${n} ${many}`;
+}
+
+export function stars(rating) {
+  const node = element('span', 'stars', '★'.repeat(rating) + '☆'.repeat(5 - rating));
+  node.setAttribute('aria-label', `${rating} din 5`);
+  node.setAttribute('role', 'img');
+  return node;
+}
+
+export function ratingSummary(rating) {
+  if (!rating.count) return 'Fără recenzii';
+  return `★ ${rating.average.toLocaleString('ro-RO')} · ${plural(rating.count, 'recenzie', 'recenzii')}`;
+}
+
+export function formatDate(sqliteDate) {
+  return new Date(`${sqliteDate.replace(' ', 'T')}Z`).toLocaleDateString('ro-RO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 export function posterElement(film, extraClass = '') {
@@ -41,7 +68,11 @@ export function filmCard(film) {
   link.href = `/film.html?id=${encodeURIComponent(film.id)}`;
 
   const body = element('div', 'film-card-body');
-  body.append(element('h2', 'film-card-title', film.title), element('p', 'muted', `${film.year} · ${film.genreLabel}`));
+  body.append(
+    element('h2', 'film-card-title', film.title),
+    element('p', 'muted', `${film.year} · ${film.genreLabel}`),
+    element('p', film.rating.count ? 'film-card-rating' : 'muted', ratingSummary(film.rating)),
+  );
   link.append(posterElement(film), body);
 
   const item = document.createElement('li');
@@ -49,24 +80,18 @@ export function filmCard(film) {
   return item;
 }
 
-export function renderPagination(container, page, totalPages) {
+// Linkurile de paginare păstrează filtrele curente (căutare, gen, sortare).
+export function renderPagination(container, page, totalPages, filters = {}) {
   container.replaceChildren();
   if (totalPages <= 1) return;
 
   const pageLink = (target, text) => {
     const link = element('a', 'btn btn-ghost', text);
-    link.href = `?page=${target}`;
+    link.href = `?${new URLSearchParams({ ...filters, page: String(target) })}`;
     return link;
   };
 
   if (page > 1) container.append(pageLink(page - 1, '← Înapoi'));
   container.append(element('span', 'muted', `Pagina ${page} din ${totalPages}`));
   if (page < totalPages) container.append(pageLink(page + 1, 'Înainte →'));
-}
-
-// „1 film”, „5 filme”, „20 de filme”, „101 filme”.
-export function countFilms(n) {
-  if (n === 1) return '1 film';
-  const rest = n % 100;
-  return n >= 20 && (rest === 0 || rest >= 20) ? `${n} de filme` : `${n} filme`;
 }

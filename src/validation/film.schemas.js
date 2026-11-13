@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GENRES } from '../constants.js';
+import { FILM_SORTS, GENRES } from '../constants.js';
 import { withoutControlChars } from './common.js';
 
 const MAX_YEAR = new Date().getFullYear() + 5;
@@ -25,6 +25,10 @@ export const filmSchema = z.strictObject({
   ).default(''),
 });
 
+// Un formular trimis cu un câmp gol (?genre=) înseamnă „fără filtru”.
+const emptyToUndefined = (value) => (value === '' ? undefined : value);
+
+// Parametrii din URL pot fi și liste (?genre=a&genre=b); tipurile de mai jos le resping.
 export const filmListQuerySchema = z.object({
   page: z.coerce
     .number({ error: 'Pagina nu este validă.' })
@@ -32,4 +36,14 @@ export const filmListQuerySchema = z.object({
     .min(1, { error: 'Pagina nu este validă.' })
     .max(1000, { error: 'Pagina nu este validă.' })
     .default(1),
+  q: z.preprocess(
+    emptyToUndefined,
+    withoutControlChars(
+      z.string({ error: 'Textul căutat nu este valid.' })
+        .trim()
+        .max(100, { error: 'Textul căutat poate avea cel mult 100 de caractere.' }),
+    ).optional(),
+  ),
+  genre: z.preprocess(emptyToUndefined, z.enum(Object.keys(GENRES), { error: 'Alege un gen din listă.' }).optional()),
+  sort: z.preprocess(emptyToUndefined, z.enum(FILM_SORTS, { error: 'Ordinea de sortare nu este validă.' }).default('recent')),
 });
