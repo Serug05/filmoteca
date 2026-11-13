@@ -6,7 +6,7 @@
   <title>Filmoteca</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/style.css">
-  <script type="module" src="/js/home.js"></script>
+  <script type="module" src="/js/catalog.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -17,11 +17,17 @@
   </header>
 
   <main class="container">
-    <section class="hero">
-      <h1>Filme de văzut, filme văzute.</h1>
-      <p class="lead">Caută în catalog, lasă o recenzie și ține-ți lista privată de vizionare.</p>
-      <p class="muted" data-greeting></p>
+    <section class="page-head">
+      <div>
+        <h1>Catalogul de filme</h1>
+        <p class="muted" data-catalog-summary></p>
+      </div>
+      <a class="btn btn-primary" href="/film-form.html" data-add-film hidden>Adaugă un film</a>
     </section>
+
+    <p class="form-error" data-page-error role="alert"></p>
+    <ul class="film-grid" data-film-grid></ul>
+    <nav class="pagination" data-pagination aria-label="Pagini"></nav>
   </main>
 </body>
 </html>

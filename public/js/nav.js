@@ -42,7 +42,7 @@ export async function renderNav() {
       }
     });
 
-    items.push(name, logout);
+    items.push(navLink('/film-form.html', 'Adaugă film'), name, logout);
   } else {
     items.push(navLink('/login.html', 'Intră în cont'), navLink('/register.html', 'Cont nou'));
   }

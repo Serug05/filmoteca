@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { loadConfig, loadEnvFile } from '../src/config.js';
 import { ROLES } from '../src/constants.js';
 import { openDb } from '../src/db/index.js';
@@ -62,6 +64,11 @@ const seed = db.transaction(() => {
 
 seed();
 db.close();
+
+// Posterele vechi nu mai aparțin niciunui film după reset.
+const postersDir = path.join(config.uploadsDir, 'posters');
+fs.rmSync(postersDir, { recursive: true, force: true });
+fs.mkdirSync(postersDir, { recursive: true });
 
 const total = USERS.length + FILMS.length + REVIEWS.length + WATCHLIST.length;
 console.log(`Seed gata: ${USERS.length} utilizatori, ${FILMS.length} filme, ${REVIEWS.length} recenzii, ${WATCHLIST.length} intrări în liste (${total} înregistrări).`);

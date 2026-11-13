@@ -7,9 +7,12 @@ export class ApiError extends Error {
 }
 
 // Toate cererile către server trec pe aici. Cookie-ul de sesiune e trimis automat de browser.
+// `body` poate fi un obiect (trimis ca JSON) sau un FormData (pentru fișiere).
 export async function api(path, { method = 'GET', body } = {}) {
   const options = { method, credentials: 'same-origin', headers: { Accept: 'application/json' } };
-  if (body !== undefined) {
+  if (body instanceof FormData) {
+    options.body = body;
+  } else if (body !== undefined) {
     options.headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(body);
   }

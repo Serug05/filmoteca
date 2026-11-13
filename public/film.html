@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Film · Filmoteca</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/film.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">Filmoteca</a>
+      <nav class="nav" data-nav aria-label="Navigare principală"></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="back-link"><a href="/">← Înapoi la catalog</a></p>
+    <p class="form-error" data-page-error role="alert"></p>
+
+    <article class="film-detail" data-film hidden>
+      <div data-poster></div>
+      <div class="film-info">
+        <h1 data-title></h1>
+        <p class="film-meta" data-meta></p>
+        <p class="film-description" data-description></p>
+        <p class="muted">Adăugat de <strong data-owner></strong></p>
+
+        <div class="actions" data-actions hidden>
+          <a class="btn btn-ghost" data-edit>Editează</a>
+          <button class="btn btn-danger" type="button" data-delete>Șterge filmul</button>
+        </div>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

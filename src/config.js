@@ -19,6 +19,7 @@ export function loadConfig(env = process.env) {
   return {
     port: Number(env.PORT ?? 3000),
     dbPath: dbPath === ':memory:' ? dbPath : path.resolve(ROOT_DIR, dbPath),
+    uploadsDir: path.resolve(ROOT_DIR, env.UPLOADS_DIR ?? 'uploads'),
     cookieSecure: env.COOKIE_SECURE === 'true',
     sessionTtlMs: (Number.isFinite(ttlHours) && ttlHours > 0 ? ttlHours : 24) * 60 * 60 * 1000,
   };

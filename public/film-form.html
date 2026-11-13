@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adaugă un film · Filmoteca</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/film-form.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">Filmoteca</a>
+      <nav class="nav" data-nav aria-label="Navigare principală"></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card form-card">
+      <h1 data-heading>Adaugă un film</h1>
+
+      <form data-film-form novalidate>
+        <p class="form-error" data-form-error role="alert"></p>
+
+        <label for="title">Titlu</label>
+        <input id="title" name="title" type="text" maxlength="120" required>
+        <p class="field-error" data-error-for="title"></p>
+
+        <div class="form-row">
+          <div>
+            <label for="year">An</label>
+            <input id="year" name="year" type="number" min="1888" max="2100" step="1" inputmode="numeric" required>
+            <p class="field-error" data-error-for="year"></p>
+          </div>
+          <div>
+            <label for="genre">Gen</label>
+            <select id="genre" name="genre" required>
+              <option value="">Alege genul…</option>
+            </select>
+            <p class="field-error" data-error-for="genre"></p>
+          </div>
+        </div>
+
+        <label for="description">Descriere <span class="muted">(opțional)</span></label>
+        <textarea id="description" name="description" rows="5" maxlength="1000"></textarea>
+        <p class="field-error" data-error-for="description"></p>
+
+        <label for="poster">Poster <span class="muted">(opțional)</span></label>
+        <input id="poster" name="poster" type="file" accept="image/jpeg,image/png,image/webp">
+        <p class="hint">JPG, PNG sau WebP, maximum 2 MB.</p>
+        <p class="field-error" data-error-for="poster"></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Salvează</button>
+          <a class="btn btn-ghost" href="/" data-cancel>Renunță</a>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

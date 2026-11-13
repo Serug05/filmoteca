@@ -8,6 +8,17 @@ export function validateBody(schema) {
   };
 }
 
+// La fel pentru parametrii din URL (?page=2). În Express 5, req.query nu poate fi înlocuit,
+// așa că valorile validate ajung în req.validQuery.
+export function validateQuery(schema) {
+  return (req, res, next) => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) return res.status(400).json(formatValidationError(result.error));
+    req.validQuery = result.data;
+    next();
+  };
+}
+
 function formatValidationError(error) {
   const fields = {};
   for (const issue of error.issues) {

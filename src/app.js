@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import { ROOT_DIR } from './config.js';
@@ -6,15 +7,23 @@ import { apiNotFound, errorHandler } from './middleware/errors.js';
 import { createAuthLimiters } from './middleware/rateLimits.js';
 import { crossOriginGuard, securityHeaders } from './middleware/security.js';
 import { authRouter } from './routes/auth.routes.js';
+import { filmsRouter } from './routes/films.routes.js';
+import { genresRouter } from './routes/genres.routes.js';
 
 // Construiește aplicația fără să o pornească; testele o folosesc direct, cu o bază de date în memorie.
 export function createApp({ db, config }) {
+  const postersDir = path.join(config.uploadsDir, 'posters');
+  fs.mkdirSync(postersDir, { recursive: true });
+
   const app = express();
   app.disable('x-powered-by');
   app.use(securityHeaders(config));
 
   // Doar folderul public/ este servit static, niciodată rădăcina proiectului (.env, baza de date).
   app.use(express.static(path.join(ROOT_DIR, 'public'), { dotfiles: 'ignore' }));
+
+  // Posterele sunt publice. În folder ajung doar fișiere .webp create de server, cu nume aleatorii.
+  app.use('/uploads/posters', express.static(postersDir, { dotfiles: 'deny', index: false, redirect: false }));
 
   const api = express.Router();
   api.use(crossOriginGuard);
@@ -26,6 +35,8 @@ export function createApp({ db, config }) {
   });
 
   api.use('/auth', authRouter({ db, config, limiters: createAuthLimiters() }));
+  api.use('/films', filmsRouter({ db, postersDir }));
+  api.use('/genres', genresRouter());
   api.use(apiNotFound);
 
   app.use('/api', api);
