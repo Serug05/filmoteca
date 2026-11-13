@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cont nou · Filmoteca</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/register.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">Filmoteca</a>
+      <nav class="nav" data-nav aria-label="Navigare principală"></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card auth-card">
+      <h1>Creează un cont</h1>
+      <form data-register-form novalidate>
+        <p class="form-error" data-form-error role="alert"></p>
+
+        <label for="username">Nume de utilizator</label>
+        <input id="username" name="username" type="text" autocomplete="username" minlength="3" maxlength="30" required>
+        <p class="hint">3–30 caractere: litere, cifre, punct, cratimă sau underscore. Este public.</p>
+        <p class="field-error" data-error-for="username"></p>
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <p class="hint">Îl vezi doar tu.</p>
+        <p class="field-error" data-error-for="email"></p>
+
+        <label for="password">Parolă</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+        <p class="hint">Cel puțin 10 caractere.</p>
+        <p class="field-error" data-error-for="password"></p>
+
+        <label for="confirm">Confirmă parola</label>
+        <input id="confirm" name="confirm" type="password" autocomplete="new-password" maxlength="128" required>
+        <p class="field-error" data-error-for="confirm"></p>
+
+        <button type="submit" class="btn btn-primary">Creează contul</button>
+      </form>
+      <p class="muted">Ai deja cont? <a href="/login.html">Intră în cont</a></p>
+    </section>
+  </main>
+</body>
+</html>

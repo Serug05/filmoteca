@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autentificare · Filmoteca</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/login.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">Filmoteca</a>
+      <nav class="nav" data-nav aria-label="Navigare principală"></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card auth-card">
+      <h1>Intră în cont</h1>
+      <form data-login-form novalidate>
+        <p class="form-error" data-form-error role="alert"></p>
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <p class="field-error" data-error-for="email"></p>
+
+        <label for="password">Parolă</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+        <p class="field-error" data-error-for="password"></p>
+
+        <button type="submit" class="btn btn-primary">Intră</button>
+      </form>
+      <p class="muted">Nu ai cont? <a href="/register.html">Creează unul</a></p>
+    </section>
+  </main>
+</body>
+</html>
