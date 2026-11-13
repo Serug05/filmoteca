@@ -19,11 +19,11 @@ process.on('exit', () => {
 
 // Fiecare test primește o aplicație nouă, cu propria bază de date în memorie
 // și propriul folder temporar pentru fișierele încărcate (șters la final).
-export function makeApp() {
+export function makeApp(overrides = {}) {
   const db = openDb(':memory:');
   const uploadsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'filmoteca-test-'));
   tempDirs.push(uploadsDir);
-  const config = { cookieSecure: false, sessionTtlMs: 60 * 60 * 1000, uploadsDir };
+  const config = { cookieSecure: false, sessionTtlMs: 60 * 60 * 1000, uploadsDir, ...overrides };
   return { db, app: createApp({ db, config }), postersDir: path.join(uploadsDir, 'posters') };
 }
 

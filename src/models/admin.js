@@ -2,8 +2,8 @@ import { likePattern } from '../services/search.js';
 
 // Interogări folosite doar de rutele de administrare (protejate de requireRole('admin')).
 
-export const USERS_PER_PAGE = 25;
-export const REVIEWS_PER_PAGE = 20;
+const USERS_PER_PAGE = 25;
+const REVIEWS_PER_PAGE = 20;
 
 const SELECT_ADMIN_USER = `
   SELECT u.id, u.username, u.email, u.role, u.is_blocked, u.created_at,

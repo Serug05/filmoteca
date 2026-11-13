@@ -1,7 +1,7 @@
 import { GENRES } from '../constants.js';
 import { likePattern } from '../services/search.js';
 
-export const FILMS_PER_PAGE = 12;
+const FILMS_PER_PAGE = 12;
 
 // Coloanele cerute explicit: din tabelul users luăm doar username-ul, niciodată email sau parolă.
 // Media notelor și numărul de recenzii se calculează din tabelul reviews.

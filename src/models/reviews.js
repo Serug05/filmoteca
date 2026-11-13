@@ -5,7 +5,7 @@ const SELECT_REVIEW = `
   FROM reviews r
   JOIN users u ON u.id = r.user_id`;
 
-export const MAX_REVIEWS_PER_FILM = 100;
+const MAX_REVIEWS_PER_FILM = 100;
 
 export function listReviewsForFilm(db, filmId) {
   return db

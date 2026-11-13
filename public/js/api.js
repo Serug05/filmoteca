@@ -1,4 +1,4 @@
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor(status, body) {
     super(body?.error ?? 'A apărut o eroare neașteptată.');
     this.status = status;

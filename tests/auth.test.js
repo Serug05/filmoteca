@@ -19,6 +19,15 @@ describe('Înregistrare', () => {
     assert.match(cookie, /SameSite=Strict/i);
   });
 
+  test('prin HTTPS, cookie-ul de sesiune primește automat marcajul Secure', async () => {
+    const { app } = makeApp({ trustProxy: 1 });
+    const viaHttps = await request(app).post('/api/auth/register').set('X-Forwarded-Proto', 'https').send(ANA);
+    assert.match(viaHttps.headers['set-cookie'].find((c) => c.startsWith('sid=')), /;\s*Secure/i);
+
+    const viaHttp = await request(app).post('/api/auth/login').send({ email: ANA.email, password: ANA.password });
+    assert.doesNotMatch(viaHttp.headers['set-cookie'].find((c) => c.startsWith('sid=')), /;\s*Secure/i);
+  });
+
   test('parola este salvată ca hash Argon2id, nu în clar', async () => {
     const { app, db } = makeApp();
     await request(app).post('/api/auth/register').send(ANA).expect(201);
