@@ -6,6 +6,7 @@ import { loadSession } from './middleware/auth.js';
 import { apiNotFound, errorHandler } from './middleware/errors.js';
 import { createAuthLimiters } from './middleware/rateLimits.js';
 import { crossOriginGuard, securityHeaders } from './middleware/security.js';
+import { adminRouter } from './routes/admin.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { filmsRouter } from './routes/films.routes.js';
 import { genresRouter } from './routes/genres.routes.js';
@@ -39,6 +40,7 @@ export function createApp({ db, config }) {
   const limiters = createAuthLimiters();
   api.use('/auth', authRouter({ db, config, limiters }));
   api.use('/me', meRouter({ db, limiters }));
+  api.use('/admin', adminRouter({ db }));
   api.use('/films', filmsRouter({ db, postersDir }));
   api.use('/genres', genresRouter());
   api.use(reviewsRouter({ db }));

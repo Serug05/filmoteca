@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administrare · Filmoteca</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/admin.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">Filmoteca</a>
+      <nav class="nav" data-nav aria-label="Navigare principală"></nav>
+    </div>
+  </header>
+
+  <main class="container admin-page">
+    <section class="page-head">
+      <div>
+        <h1>Administrare</h1>
+        <p class="muted">Utilizatori, moderarea recenziilor și jurnalul acțiunilor administratorilor.</p>
+      </div>
+    </section>
+
+    <p class="form-error" data-page-error role="alert"></p>
+
+    <div data-admin hidden>
+      <section aria-labelledby="stats-heading">
+        <h2 id="stats-heading">Raport</h2>
+        <ul class="stat-grid" data-totals></ul>
+        <div class="report-columns">
+          <div class="card">
+            <h3>Cele mai bine notate filme</h3>
+            <ol class="report-list" data-top-films></ol>
+          </div>
+          <div class="card">
+            <h3>Cei mai activi recenzenți</h3>
+            <ol class="report-list" data-top-reviewers></ol>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="users-heading">
+        <h2 id="users-heading">Utilizatori</h2>
+        <form class="search-bar admin-search" data-user-search role="search">
+          <label class="visually-hidden" for="user-q">Caută după nume sau email</label>
+          <input id="user-q" name="q" type="search" placeholder="Caută după nume sau email…" maxlength="100" autocomplete="off">
+          <button class="btn btn-primary" type="submit">Caută</button>
+        </form>
+        <p class="form-error" data-users-error role="alert"></p>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">Utilizator</th>
+                <th scope="col">Email</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Filme</th>
+                <th scope="col">Recenzii</th>
+                <th scope="col">Stare</th>
+                <th scope="col"><span class="visually-hidden">Acțiuni</span></th>
+              </tr>
+            </thead>
+            <tbody data-users></tbody>
+          </table>
+        </div>
+        <nav class="pagination" data-users-pagination aria-label="Pagini utilizatori"></nav>
+      </section>
+
+      <section aria-labelledby="reviews-heading">
+        <h2 id="reviews-heading">Recenzii recente</h2>
+        <p class="form-error" data-reviews-error role="alert"></p>
+        <ul class="review-list" data-admin-reviews></ul>
+        <nav class="pagination" data-reviews-pagination aria-label="Pagini recenzii"></nav>
+      </section>
+
+      <section aria-labelledby="log-heading">
+        <h2 id="log-heading">Jurnalul administratorilor</h2>
+        <p class="muted" data-log-empty hidden>Nicio acțiune înregistrată încă.</p>
+        <ul class="log-list" data-log></ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

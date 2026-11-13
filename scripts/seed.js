@@ -37,7 +37,10 @@ const db = openDb(config.dbPath);
 const hashes = await Promise.all(USERS.map((user) => hashPassword(user.password)));
 
 const seed = db.transaction(() => {
-  db.exec('DELETE FROM sessions; DELETE FROM watchlist; DELETE FROM reviews; DELETE FROM films; DELETE FROM users;');
+  db.exec(`
+    DELETE FROM sessions; DELETE FROM admin_log; DELETE FROM watchlist;
+    DELETE FROM reviews; DELETE FROM films; DELETE FROM users;
+  `);
 
   const userIds = {};
   const insertUser = db.prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');

@@ -2,7 +2,17 @@
 
 Aplicație web pentru o listă de filme: un catalog public de filme, recenzii cu note de la 1 la 5 și o listă privată de vizionare pentru fiecare utilizator. Proiect pentru cursul de Aplicații Web (tema 6, „Listă de filme de văzut”) și pentru Provocarea 19/20.
 
-> **Stadiu:** etapa 4 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere), posterele, recenziile, căutarea, filtrarea și sortarea, lista privată de vizionare și profilul.
+> **Stadiu:** etapa 5 din 7. Gata: autentificarea, baza de date, datele demo, catalogul de filme (adăugare, editare, ștergere), posterele, recenziile, căutarea, filtrarea și sortarea, lista privată de vizionare, profilul și administrarea (cu jurnal de audit).
+
+## Roluri
+
+| Rol     | Ce poate face |
+|---------|---------------|
+| vizitator | vede catalogul, filmele și recenziile |
+| `user`  | tot ce poate un vizitator, plus: adaugă filme și postere, își editează/șterge propriile filme*, scrie câte o recenzie la fiecare film, își ține lista privată și își administrează profilul |
+| `admin` | tot ce poate un `user`, plus: vede toți utilizatorii (cu emailul), blochează/deblochează conturi de `user`, editează sau șterge orice film, șterge orice recenzie, vede raportul și jurnalul de audit |
+
+Adminul **nu** poate: vedea listele private ale altora, scrie sau edita recenzii în numele altcuiva, bloca alți admini sau propriul cont, schimba rolul cuiva. Rolurile se stabilesc doar prin seed.
 
 ## Tehnologii
 
@@ -53,8 +63,8 @@ src/
   config.js         citește setările din .env
   constants.js      roluri, genuri de film, numele cookie-ului
   db/               schema SQL și conexiunea la baza de date
-  models/           interogările pe tabele (users, sessions, films, reviews, watchlist)
-  routes/           rutele API (auth, films, reviews, me, genres)
+  models/           interogările pe tabele (users, sessions, films, reviews, watchlist, admin, adminLog)
+  routes/           rutele API (auth, films, reviews, me, admin, genres)
   middleware/       autentificare, roluri, validare, CSRF, limite de încercări, încărcări, erori
   services/         parole (Argon2), cookie-ul de sesiune, permisiuni, postere, căutare
   validation/       schemele zod pentru datele primite
@@ -73,6 +83,7 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 | `/film-form.html`   | adăugarea sau editarea (`?id=…`) unui film, cu poster    |
 | `/lista-mea.html`   | lista privată de vizionare: de văzut / văzute, cu notițe |
 | `/profil.html`      | profilul: emailul, statistici, schimbarea emailului și a parolei |
+| `/admin.html`       | doar pentru admin: raport, utilizatori, moderarea recenziilor, jurnal |
 | `/login.html`       | autentificare                                           |
 | `/register.html`    | cont nou                                                |
 
@@ -102,6 +113,12 @@ uploads/            posterele încărcate (creat automat, nu intră în Git)
 | POST   | `/api/me/watchlist`      | da                      | adaugă un film în listă                               |
 | PUT    | `/api/me/watchlist/:id`  | da, doar proprietarul   | schimbă starea, data vizionării sau notița             |
 | DELETE | `/api/me/watchlist/:id`  | da, doar proprietarul   | scoate filmul din listă                               |
+
+| GET    | `/api/admin/stats`       | admin                   | raport: totaluri, cele mai bine notate filme, cei mai activi recenzenți |
+| GET    | `/api/admin/users`       | admin                   | utilizatorii, cu email (`?q=` caută după nume sau email) |
+| PATCH  | `/api/admin/users/:id`   | admin                   | blochează/deblochează un cont de `user` (`{ "blocked": true }`) |
+| GET    | `/api/admin/reviews`     | admin                   | recenziile recente, pentru moderare                   |
+| GET    | `/api/admin/log`         | admin                   | jurnalul acțiunilor administratorilor                 |
 
 Rutele `/api/me/...` lucrează doar cu datele utilizatorului conectat. O intrare din lista altcuiva răspunde 404, ca și cum n-ar exista, ca să nu se afle nici măcar că există.
 

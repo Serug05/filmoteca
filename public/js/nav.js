@@ -39,12 +39,10 @@ export async function renderNav() {
       }
     });
 
-    items.push(
-      navLink('/film-form.html', 'Adaugă film'),
-      navLink('/lista-mea.html', 'Lista mea'),
-      navLink('/profil.html', user.username, 'nav-user'),
-      logout,
-    );
+    items.push(navLink('/film-form.html', 'Adaugă film'), navLink('/lista-mea.html', 'Lista mea'));
+    // Linkul apare doar pentru admini, dar pagina și API-ul verifică rolul separat, pe server.
+    if (user.role === 'admin') items.push(navLink('/admin.html', 'Administrare'));
+    items.push(navLink('/profil.html', user.username, 'nav-user'), logout);
   } else {
     items.push(navLink('/login.html', 'Intră în cont'), navLink('/register.html', 'Cont nou'));
   }

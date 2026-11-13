@@ -45,6 +45,17 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
 
+-- Jurnalul acțiunilor administratorilor: cine, ce a făcut, asupra cui și când.
+CREATE TABLE IF NOT EXISTS admin_log (
+  id          INTEGER PRIMARY KEY,
+  admin_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  action      TEXT    NOT NULL,
+  target_type TEXT    NOT NULL,
+  target_id   INTEGER,
+  details     TEXT    NOT NULL DEFAULT '',
+  created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Lista privată de vizionare: o vede doar proprietarul ei.
 CREATE TABLE IF NOT EXISTS watchlist (
   id         INTEGER PRIMARY KEY,

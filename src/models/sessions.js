@@ -32,6 +32,11 @@ export function deleteSession(db, token) {
   db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(hashToken(token));
 }
 
+// La blocarea unui cont: toate sesiunile lui se închid imediat.
+export function deleteUserSessions(db, userId) {
+  db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+}
+
 // După schimbarea parolei: toate celelalte sesiuni ale utilizatorului se închid
 // (de ex. un dispozitiv pierdut), doar cea curentă rămâne.
 export function deleteOtherSessions(db, userId, keepToken) {

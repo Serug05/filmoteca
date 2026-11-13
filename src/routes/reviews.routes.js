@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { loadFilm, loadReview } from '../middleware/loaders.js';
 import { validateBody } from '../middleware/validate.js';
+import { ADMIN_ACTIONS, logModeration } from '../models/adminLog.js';
 import { createReview, deleteReview, listReviewsForFilm, toReviewJson, updateReview } from '../models/reviews.js';
 import { canManage, isAuthor } from '../services/permissions.js';
 import { reviewSchema } from '../validation/review.schemas.js';
@@ -39,6 +40,12 @@ export function reviewsRouter({ db }) {
       return res.status(403).json({ error: 'Poți șterge doar recenziile scrise de tine.' });
     }
     deleteReview(db, req.review.id);
+    logModeration(db, req.user, req.review.user_id, {
+      action: ADMIN_ACTIONS.DELETE_REVIEW,
+      targetType: 'review',
+      targetId: req.review.id,
+      details: `${req.review.author_username}: ${req.review.body}`,
+    });
     res.status(204).end();
   });
 

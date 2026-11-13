@@ -12,6 +12,7 @@ import {
   toFilmJson,
   updateFilm,
 } from '../models/films.js';
+import { ADMIN_ACTIONS, logModeration } from '../models/adminLog.js';
 import { canManage, isAdmin } from '../services/permissions.js';
 import { PosterError, processPoster, removePoster, savePoster } from '../services/posters.js';
 import { filmListQuerySchema, filmSchema } from '../validation/film.schemas.js';
@@ -47,8 +48,19 @@ export function filmsRouter({ db, postersDir }) {
     res.status(201).json({ film: toFilmJson(film) });
   });
 
+  function logFilmModeration(req, action) {
+    logModeration(db, req.user, req.film.owner_id, {
+      action,
+      targetType: 'film',
+      targetId: req.film.id,
+      details: req.film.title,
+    });
+  }
+
   router.put('/:id', requireAuth, loadFilm, requireManager, validateBody(filmSchema), (req, res) => {
-    res.json({ film: toFilmJson(updateFilm(db, req.film.id, req.body)) });
+    const film = updateFilm(db, req.film.id, req.body);
+    logFilmModeration(req, ADMIN_ACTIONS.EDIT_FILM);
+    res.json({ film: toFilmJson(film) });
   });
 
   router.delete('/:id', requireAuth, loadFilm, requireManager, async (req, res) => {
@@ -56,6 +68,7 @@ export function filmsRouter({ db, postersDir }) {
       return res.status(409).json(USED_BY_OTHERS);
     }
     deleteFilm(db, req.film.id);
+    logFilmModeration(req, ADMIN_ACTIONS.DELETE_FILM);
     await removePoster(postersDir, req.film.poster);
     res.status(204).end();
   });
@@ -74,6 +87,7 @@ export function filmsRouter({ db, postersDir }) {
 
     const name = await savePoster(postersDir, poster);
     const film = setFilmPoster(db, req.film.id, name);
+    logFilmModeration(req, ADMIN_ACTIONS.EDIT_FILM);
     await removePoster(postersDir, req.film.poster);
     res.json({ film: toFilmJson(film) });
   });
