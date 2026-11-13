@@ -12,7 +12,7 @@ function navLink(href, text, className) {
   return link;
 }
 
-export async function getCurrentUser() {
+async function getCurrentUser() {
   try {
     const { user } = await api('/auth/me');
     return user;
@@ -44,7 +44,7 @@ export async function renderNav() {
     if (user.role === 'admin') items.push(navLink('/admin.html', 'Administrare'));
     items.push(navLink('/profil.html', user.username, 'nav-user'), logout);
   } else {
-    items.push(navLink('/login.html', 'Intră în cont'), navLink('/register.html', 'Cont nou'));
+    items.push(navLink('/register.html', 'Cont nou'), navLink('/login.html', 'Intră în cont', 'btn btn-primary'));
   }
 
   nav.replaceChildren(...items);

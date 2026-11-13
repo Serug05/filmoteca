@@ -71,17 +71,23 @@ export function posterElement(film, extraClass = '') {
   return frame;
 }
 
+// Cardul din catalog: posterul pe toată suprafața, titlul peste un gradient închis, nota în colț.
 export function filmCard(film) {
   const link = element('a', 'film-card');
   link.href = `/film.html?id=${encodeURIComponent(film.id)}`;
 
-  const body = element('div', 'film-card-body');
-  body.append(
-    element('h2', 'film-card-title', film.title),
-    element('p', 'muted', `${film.year} · ${film.genreLabel}`),
-    element('p', film.rating.count ? 'film-card-rating' : 'muted', ratingSummary(film.rating)),
+  const overlay = element('div', 'film-card-overlay');
+  overlay.append(
+    element('h3', 'film-card-title', film.title),
+    element('p', 'film-card-meta', `${film.year} · ${film.genreLabel}`),
   );
-  link.append(posterElement(film), body);
+  link.append(posterElement(film), overlay);
+
+  if (film.rating.count) {
+    const chip = element('span', 'rating-chip', `★ ${film.rating.average.toLocaleString('ro-RO')}`);
+    chip.setAttribute('aria-label', `Nota medie ${film.rating.average} din 5, ${plural(film.rating.count, 'recenzie', 'recenzii')}`);
+    link.append(chip);
+  }
 
   const item = document.createElement('li');
   item.append(link);

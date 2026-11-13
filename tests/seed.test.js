@@ -16,10 +16,12 @@ test('seed-ul creează cel puțin 2 utilizatori pentru fiecare rol și peste 20 
     const db = openDb(config.dbPath);
     const roles = Object.fromEntries(db.prepare('SELECT role, COUNT(*) AS n FROM users GROUP BY role').all().map((r) => [r.role, r.n]));
     const hashes = db.prepare('SELECT password_hash FROM users').all().map((r) => r.password_hash);
+    const posters = db.prepare('SELECT poster FROM films').all().map((r) => r.poster);
     db.close();
 
     assert.ok(roles.admin >= 2 && roles.user >= 2);
     assert.ok(hashes.every((hash) => hash.startsWith('$argon2id$')));
+    assert.ok(posters.every((name) => fs.existsSync(path.join(config.uploadsDir, 'posters', name))), 'fiecare film demo are un poster pe disc');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -3,7 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROLES } from '../src/constants.js';
 import { openDb } from '../src/db/index.js';
+import sharp from 'sharp';
 import { hashPassword } from '../src/services/passwords.js';
+import { savePoster } from '../src/services/posters.js';
+import { posterSvg } from './poster-art.js';
 import { FILMS, REVIEWS, WATCHLIST } from './seed-data.js';
 
 // Parolele conturilor demo din README vin din .env, nu sunt scrise în cod.
@@ -29,6 +32,17 @@ export async function seedDatabase(config, passwords) {
   ];
   const hashes = await Promise.all(users.map((user) => hashPassword(user.password)));
 
+  // Posterele vechi nu mai aparțin niciunui film după reset. Fiecare film demo primește
+  // un poster nou, original (vezi poster-art.js), salvat exact ca un poster încărcat.
+  const postersDir = path.join(config.uploadsDir, 'posters');
+  fs.rmSync(postersDir, { recursive: true, force: true });
+  fs.mkdirSync(postersDir, { recursive: true });
+  const posters = {};
+  for (const film of FILMS) {
+    const image = await sharp(Buffer.from(posterSvg(film))).webp({ quality: 82 }).toBuffer();
+    posters[film.title] = await savePoster(postersDir, image);
+  }
+
   const db = openDb(config.dbPath);
   try {
     db.transaction(() => {
@@ -44,9 +58,11 @@ export async function seedDatabase(config, passwords) {
       });
 
       const filmIds = {};
-      const insertFilm = db.prepare('INSERT INTO films (owner_id, title, year, genre, description) VALUES (?, ?, ?, ?, ?)');
+      const insertFilm = db.prepare('INSERT INTO films (owner_id, title, year, genre, description, poster) VALUES (?, ?, ?, ?, ?, ?)');
       for (const film of FILMS) {
-        filmIds[film.title] = insertFilm.run(userIds[film.owner], film.title, film.year, film.genre, film.description).lastInsertRowid;
+        filmIds[film.title] = insertFilm
+          .run(userIds[film.owner], film.title, film.year, film.genre, film.description, posters[film.title])
+          .lastInsertRowid;
       }
 
       const insertReview = db.prepare('INSERT INTO reviews (film_id, user_id, rating, body) VALUES (?, ?, ?, ?)');
@@ -62,11 +78,6 @@ export async function seedDatabase(config, passwords) {
   } finally {
     db.close();
   }
-
-  // Posterele vechi nu mai aparțin niciunui film după reset.
-  const postersDir = path.join(config.uploadsDir, 'posters');
-  fs.rmSync(postersDir, { recursive: true, force: true });
-  fs.mkdirSync(postersDir, { recursive: true });
 
   return { users: users.length, films: FILMS.length, reviews: REVIEWS.length, watchlist: WATCHLIST.length };
 }

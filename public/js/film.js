@@ -17,6 +17,17 @@ let editingReviewId = null;
 function renderFilm(film) {
   document.title = `${film.title} · Filmoteca`;
   document.querySelector('[data-poster]').replaceChildren(posterElement(film, 'poster-large'));
+
+  // Fundalul paginii: posterul, mărit și estompat.
+  const backdrop = document.querySelector('[data-backdrop]');
+  if (film.posterUrl) {
+    const image = document.createElement('img');
+    image.src = film.posterUrl;
+    image.alt = '';
+    backdrop.replaceChildren(image);
+  } else {
+    backdrop.replaceChildren();
+  }
   document.querySelector('[data-title]').textContent = film.title;
   document.querySelector('[data-meta]').textContent = `${film.year} · ${film.genreLabel}`;
   document.querySelector('[data-rating]').textContent = ratingSummary(film.rating);

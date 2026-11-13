@@ -84,6 +84,8 @@ Create automat la prima pornire (sau cu `npm run seed`):
 
 Celelalte conturi demo (`admin2`, `mihai`, `elena`) primesc parole aleatorii la fiecare seed.
 
+Filmele demo primesc postere **generate**: artă abstractă originală, colorată după gen (`scripts/poster-art.js`). Aplicația nu folosește postere reale, protejate de drepturi de autor. Orice poster poate fi înlocuit din „Editează filmul”.
+
 ## Teste
 
 ```bash
@@ -182,5 +184,5 @@ Parametrii pentru `GET /api/films`: `q` (caută în titlu, fără să țină con
 | ✅ Rulează cu o singură comandă | `docker compose up --build` sau `npm start` după instalare |
 | ✅ Date de seed: 2+ utilizatori pentru fiecare rol, 20+ înregistrări | 2 admini, 3 utilizatori, 43 de înregistrări (`scripts/seed-lib.js`, testat în `tests/seed.test.js`) |
 | ✅ README, SECURITY.md și .env.example incluse; niciun secret în depozit | `.env` e în `.gitignore` |
-| ✅ Cel puțin 10 teste automate, dintre care 3 pentru controlul accesului | 73 de teste, peste 20 pentru controlul accesului (`npm test`) |
+| ✅ Cel puțin 10 teste automate, dintre care 3 pentru controlul accesului | 74 de teste, peste 20 pentru controlul accesului (`npm test`) |
 | ✅ Commit-uri de la fiecare membru al echipei | proiect individual, câte un commit pentru fiecare etapă |

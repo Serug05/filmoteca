@@ -9,45 +9,71 @@
   <script type="module" src="/js/catalog.js"></script>
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header site-header--overlay">
     <div class="container header-inner">
       <a class="brand" href="/">Filmoteca</a>
       <nav class="nav" data-nav aria-label="Navigare principală"></nav>
     </div>
   </header>
 
-  <main class="container">
-    <section class="page-head">
-      <div>
-        <h1>Catalogul de filme</h1>
-        <p class="muted" data-catalog-summary></p>
-      </div>
-      <a class="btn btn-primary" href="/film-form.html" data-add-film hidden>Adaugă un film</a>
+  <section class="hero">
+    <div class="hero-collage" data-collage aria-hidden="true"></div>
+    <div class="container hero-content">
+      <h1>Filme de văzut,<br>filme văzute.</h1>
+      <p class="hero-sub">Caută în catalog, notează ce ai văzut și ține-ți lista privată de vizionare.</p>
+      <form class="hero-search" action="/#catalog" method="get" role="search">
+        <label class="visually-hidden" for="hero-q">Caută un film după titlu</label>
+        <input id="hero-q" name="q" type="search" placeholder="Caută un film după titlu…" maxlength="100" autocomplete="off">
+        <button class="btn btn-primary btn-large" type="submit">Caută <span class="chevron" aria-hidden="true">›</span></button>
+      </form>
+      <p class="hero-note" data-guest-note hidden>Nou aici? <a href="/register.html">Creează un cont gratuit</a> și începe-ți lista.</p>
+    </div>
+    <div class="hero-curve" aria-hidden="true"></div>
+  </section>
+
+  <main class="container home-main">
+    <section class="top-section" data-top hidden aria-labelledby="top-heading">
+      <h2 class="section-title" id="top-heading">Cele mai apreciate</h2>
+      <ol class="top-row" data-top-row></ol>
     </section>
 
-    <form class="search-bar" data-search-form role="search" action="/" method="get">
-      <label class="visually-hidden" for="q">Caută după titlu</label>
-      <input id="q" name="q" type="search" placeholder="Caută după titlu…" maxlength="100" autocomplete="off">
+    <section id="catalog" aria-labelledby="catalog-heading">
+      <div class="page-head">
+        <div>
+          <h2 class="section-title" id="catalog-heading">Catalogul de filme</h2>
+          <p class="muted" data-catalog-summary></p>
+        </div>
+        <a class="btn btn-primary" href="/film-form.html" data-add-film hidden>+ Adaugă un film</a>
+      </div>
 
-      <label class="visually-hidden" for="genre">Gen</label>
-      <select id="genre" name="genre">
-        <option value="">Toate genurile</option>
-      </select>
+      <form class="search-bar" data-search-form role="search" action="/#catalog" method="get">
+        <label class="visually-hidden" for="q">Caută după titlu</label>
+        <input id="q" name="q" type="search" placeholder="Caută după titlu…" maxlength="100" autocomplete="off">
 
-      <label class="visually-hidden" for="sort">Ordonează după</label>
-      <select id="sort" name="sort">
-        <option value="recent">Adăugate recent</option>
-        <option value="rating">Nota cea mai mare</option>
-        <option value="year">Anul apariției</option>
-        <option value="title">Titlu (A–Z)</option>
-      </select>
+        <label class="visually-hidden" for="genre">Gen</label>
+        <select id="genre" name="genre">
+          <option value="">Toate genurile</option>
+        </select>
 
-      <button class="btn btn-primary" type="submit">Caută</button>
-    </form>
+        <label class="visually-hidden" for="sort">Ordonează după</label>
+        <select id="sort" name="sort">
+          <option value="recent">Adăugate recent</option>
+          <option value="rating">Nota cea mai mare</option>
+          <option value="year">Anul apariției</option>
+          <option value="title">Titlu (A–Z)</option>
+        </select>
 
-    <p class="form-error" data-page-error role="alert"></p>
-    <ul class="film-grid" data-film-grid></ul>
-    <nav class="pagination" data-pagination aria-label="Pagini"></nav>
+        <button class="btn btn-primary" type="submit">Caută</button>
+      </form>
+
+      <p class="form-error" data-page-error role="alert"></p>
+      <ul class="film-grid" data-film-grid></ul>
+      <nav class="pagination" data-pagination aria-label="Pagini"></nav>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="container">Filmoteca · proiect pentru cursul de Aplicații Web · posterele filmelor demo sunt generate, originale</div>
+  </footer>
 </body>
 </html>
