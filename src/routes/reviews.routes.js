@@ -18,7 +18,8 @@ export function reviewsRouter({ db }) {
   router.post('/films/:filmId/reviews', requireAuth, loadFilm(db, 'filmId'), validateBody(reviewSchema), (req, res) => {
     let review;
     try {
-      review = createReview(db, { filmId: req.film.id, userId: req.user.id, ...req.body });
+      // Id-urile se pun DUPĂ datele din cerere, ca nimic din corp să nu le poată suprascrie.
+      review = createReview(db, { ...req.body, filmId: req.film.id, userId: req.user.id });
     } catch (err) {
       if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
         return res.status(409).json({ error: 'Ai scris deja o recenzie pentru acest film. O poți edita.' });

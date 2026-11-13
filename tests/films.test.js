@@ -69,6 +69,14 @@ describe('Adăugare și validare', () => {
     assert.ok(res.body.fields.year);
     assert.ok(res.body.fields.genre);
   });
+
+  test('textele cu caractere invizibile sau care inversează direcția textului sunt respinse', async () => {
+    const { app } = await setup();
+    const agent = await loginAs(app, ANA);
+    for (const title of ['Film‮gnp.exe', 'Film\u0000ascuns', 'Film⁦x⁩']) {
+      assert.equal((await agent.post('/api/films').send({ ...NEW_FILM, title })).status, 400, JSON.stringify(title));
+    }
+  });
 });
 
 describe('Controlul accesului pe filme', () => {

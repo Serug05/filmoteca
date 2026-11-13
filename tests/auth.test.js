@@ -142,4 +142,18 @@ describe('Autentificare și sesiuni', () => {
     for (let i = 0; i < 5; i += 1) assert.equal((await attempt()).status, 401);
     assert.equal((await attempt()).status, 429);
   });
+
+  test('un antet X-Forwarded-For falsificat nu ocolește limita pe IP', async () => {
+    const { app, db } = makeApp();
+    await addUser(db, ANA);
+
+    let status;
+    for (let i = 0; i < 21; i += 1) {
+      status = (await request(app)
+        .post('/api/auth/login')
+        .set('X-Forwarded-For', `10.0.0.${i}`)
+        .send({ email: `cont${i}@test.ro`, password: 'gresita-123' })).status;
+    }
+    assert.equal(status, 429);
+  });
 });

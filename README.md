@@ -2,7 +2,7 @@
 
 Aplicație web pentru o listă de filme: un catalog public de filme, recenzii cu note de la 1 la 5 și o listă privată de vizionare pentru fiecare utilizator. Proiect pentru cursul de Aplicații Web (tema 6, „Listă de filme de văzut”) și pentru Provocarea 19/20.
 
-> **Stadiu:** etapa 6 din 7. Toate funcționalitățile sunt gata, iar aplicația pornește cu o singură comandă (npm sau Docker). Urmează SECURITY.md și verificarea finală de securitate.
+Modelul de securitate (ce date sunt sensibile, cine ce vede și unde e fiecare protecție în cod) e descris în [SECURITY.md](SECURITY.md).
 
 ## Roluri
 
@@ -56,6 +56,7 @@ npm start
 | `npm run seed`  | resetează baza de date la datele demo (șterge tot ce s-a adăugat) |
 | `npm run dev`   | pornește serverul și îl repornește la fiecare modificare de cod |
 | `npm test`      | rulează testele automate |
+| `npm run attack -- http://localhost:3000` | atacă aplicația pornită (126 de verificări de securitate); creează date de test, deci rulează apoi `npm run seed` |
 
 ### Setări (`.env`)
 
@@ -65,6 +66,7 @@ npm start
 | `DB_PATH`             | `data/filme.db`  | fișierul bazei de date SQLite |
 | `UPLOADS_DIR`         | `uploads`        | folderul pentru postere |
 | `COOKIE_SECURE`       | `false`          | pune `true` când aplicația e servită prin HTTPS |
+| `TRUST_PROXY`         | `0`              | numărul de proxy-uri din fața aplicației (de ex. `1` în spatele unui server HTTPS) |
 | `SESSION_TTL_HOURS`   | `24`             | cât rămâne valabilă o sesiune |
 | `SEED_ADMIN_PASSWORD` | vezi `.env.example` | parola contului demo de admin |
 | `SEED_USER_PASSWORD`  | vezi `.env.example` | parola contului demo de utilizator |
@@ -103,7 +105,7 @@ src/
   services/         parole (Argon2), cookie-ul de sesiune, permisiuni, postere, căutare
   validation/       schemele zod pentru datele primite
 public/             paginile HTML, CSS și JavaScript-ul din browser
-scripts/            pregătirea la prima pornire (setup.js), seed-ul și datele demo
+scripts/            pregătirea la prima pornire (setup.js), seed-ul, datele demo și scriptul de atac
 tests/              testele automate
 uploads/            posterele încărcate (creat automat, nu intră în Git)
 data/               baza de date SQLite (creată automat, nu intră în Git)
@@ -163,3 +165,22 @@ Rutele `/api/me/...` lucrează doar cu datele utilizatorului conectat. O intrare
 Parametrii pentru `GET /api/films`: `q` (caută în titlu, fără să țină cont de majuscule sau diacritice), `genre` (un gen din `/api/genres`), `sort` (`recent`, `rating`, `year` sau `title`) și `page`.
 
 \* Proprietarul nu își poate șterge filmul dacă alți utilizatori l-au recenzat sau l-au pus în lista lor: altfel ar șterge, indirect, datele lor. În acest caz doar un administrator îl poate șterge.
+
+## Provocarea 19/20: lista de eligibilitate
+
+| Cerință | Unde se vede |
+|---------|--------------|
+| ✅ Înregistrare, autentificare, deconectare; parole hash-uite cu Argon2 (F1) | `/register.html`, `/login.html`, `src/routes/auth.routes.js`, `src/services/passwords.js` |
+| ✅ Cel puțin 2 roluri, acțiunile de admin impuse pe server (F2) | `user` și `admin`; `requireRole('admin')` în `src/routes/admin.routes.js` |
+| ✅ Cel puțin 3 entități relaționate, într-o bază de date reală (F3) | SQLite: `users` → `films` → `reviews`, plus `watchlist`, `sessions`, `admin_log` (`src/db/schema.sql`) |
+| ✅ CRUD complet cu verificarea proprietarului pe cel puțin 2 entități (F4) | filme, recenzii și lista mea (`src/routes/`, `src/services/permissions.js`) |
+| ✅ Date private pentru fiecare utilizator (F5) | lista mea cu notițe și emailul (`/lista-mea.html`, `/profil.html`, `src/routes/me.routes.js`) |
+| ✅ Conținut generat de utilizatori, afișat altora (F6) | filmele (titlu, descriere, poster) și recenziile |
+| ✅ Căutare / filtru pe baza unei interogări în baza de date (F7) | `/?q=…&genre=…&sort=…`, `src/models/films.js` |
+| ✅ Încărcare de fișiere cu limite de tip și dimensiune (F8) | posterul filmului: JPG/PNG/WebP, max. 2 MB (`src/services/posters.js`) |
+| ✅ 6+ pagini, 8+ endpoint-uri de date (4+ cu autentificare), 3+ formulare validate pe server | 8 pagini; 27 de endpoint-uri, dintre care 19 cer autentificare; 8 formulare validate cu zod (înregistrare, login, film, poster, recenzie, listă, email, parolă) |
+| ✅ Rulează cu o singură comandă | `docker compose up --build` sau `npm start` după instalare |
+| ✅ Date de seed: 2+ utilizatori pentru fiecare rol, 20+ înregistrări | 2 admini, 3 utilizatori, 43 de înregistrări (`scripts/seed-lib.js`, testat în `tests/seed.test.js`) |
+| ✅ README, SECURITY.md și .env.example incluse; niciun secret în depozit | `.env` e în `.gitignore` |
+| ✅ Cel puțin 10 teste automate, dintre care 3 pentru controlul accesului | 73 de teste, peste 20 pentru controlul accesului (`npm test`) |
+| ✅ Commit-uri de la fiecare membru al echipei | proiect individual, câte un commit pentru fiecare etapă |
