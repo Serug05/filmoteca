@@ -9,66 +9,99 @@
   <script type="module" src="/js/catalog.js"></script>
 </head>
 <body>
-  <header class="site-header site-header--overlay">
+  <header class="site-header site-header--home" data-header>
     <div class="container header-inner">
       <a class="brand" href="/">Filmoteca</a>
       <nav class="nav" data-nav aria-label="Navigare principală"></nav>
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-collage" data-collage aria-hidden="true"></div>
-    <div class="container hero-content">
-      <h1>Filme de văzut,<br>filme văzute.</h1>
-      <p class="hero-sub">Caută în catalog, notează ce ai văzut și ține-ți lista privată de vizionare.</p>
-      <form class="hero-search" action="/#catalog" method="get" role="search">
-        <label class="visually-hidden" for="hero-q">Caută un film după titlu</label>
-        <input id="hero-q" name="q" type="search" placeholder="Caută un film după titlu…" maxlength="100" autocomplete="off">
-        <button class="btn btn-primary btn-large" type="submit">Caută <span class="chevron" aria-hidden="true">›</span></button>
-      </form>
-      <p class="hero-note" data-guest-note hidden>Nou aici? <a href="/register.html">Creează un cont gratuit</a> și începe-ți lista.</p>
-    </div>
-    <div class="hero-curve" aria-hidden="true"></div>
-  </section>
+  <canvas class="scene-canvas" data-scene aria-hidden="true"></canvas>
 
-  <main class="container home-main">
-    <section class="top-section" data-top hidden aria-labelledby="top-heading">
-      <h2 class="section-title" id="top-heading">Cele mai apreciate</h2>
-      <ol class="top-row" data-top-row></ol>
+  <main>
+    <section class="band band--light hero3d" data-band="white">
+      <div class="container hero3d-top">
+        <div>
+          <h1 class="hero3d-title">Filme de văzut.<br>Filme văzute.<br>Toate într-un loc.</h1>
+          <p class="hero3d-lead">Caută în catalog, lasă o recenzie cu note de la 1 la 5 și ține-ți lista privată de vizionare.</p>
+          <div class="hero3d-actions">
+            <a class="btn btn-pill btn-dark" href="#catalog">Explorează catalogul <span class="pill-dot" aria-hidden="true">→</span></a>
+            <a class="btn btn-pill btn-outline" href="/register.html" data-guest-only hidden>Creează cont</a>
+          </div>
+        </div>
+        <div class="hero3d-stats">
+          <p class="stat-big"><strong data-film-count>—</strong><span>filme</span></p>
+          <p class="stat-text">Catalog public, recenzii vizibile pentru toți și o listă de vizionare doar a ta.</p>
+        </div>
+      </div>
+      <div class="hero3d-stage" data-stage aria-hidden="true"></div>
+      <p class="wordmark" aria-hidden="true">Filmoteca</p>
     </section>
 
-    <section id="catalog" aria-labelledby="catalog-heading">
-      <div class="page-head">
-        <div>
-          <h2 class="section-title" id="catalog-heading">Catalogul de filme</h2>
-          <p class="muted" data-catalog-summary></p>
-        </div>
-        <a class="btn btn-primary" href="/film-form.html" data-add-film hidden>+ Adaugă un film</a>
+    <section class="band band--graphite" data-band="red" aria-labelledby="top-heading">
+      <div class="container">
+        <p class="eyebrow">01 — Clasament</p>
+        <h2 class="band-title" id="top-heading">Cele mai apreciate</h2>
+        <ol class="rank-list" data-top-row></ol>
       </div>
+    </section>
 
-      <form class="search-bar" data-search-form role="search" action="/#catalog" method="get">
-        <label class="visually-hidden" for="q">Caută după titlu</label>
-        <input id="q" name="q" type="search" placeholder="Caută după titlu…" maxlength="100" autocomplete="off">
+    <section class="band band--dark" id="catalog" data-band="cyan" aria-labelledby="catalog-heading">
+      <div class="container">
+        <p class="eyebrow">02 — Catalog</p>
+        <div class="page-head">
+          <div>
+            <h2 class="band-title" id="catalog-heading">Toate filmele</h2>
+            <p class="muted" data-catalog-summary></p>
+          </div>
+          <a class="btn btn-primary" href="/film-form.html" data-add-film hidden>+ Adaugă un film</a>
+        </div>
 
-        <label class="visually-hidden" for="genre">Gen</label>
-        <select id="genre" name="genre">
-          <option value="">Toate genurile</option>
-        </select>
+        <form class="search-bar" data-search-form role="search" action="/#catalog" method="get">
+          <label class="visually-hidden" for="q">Caută după titlu</label>
+          <input id="q" name="q" type="search" placeholder="Caută după titlu…" maxlength="100" autocomplete="off">
 
-        <label class="visually-hidden" for="sort">Ordonează după</label>
-        <select id="sort" name="sort">
-          <option value="recent">Adăugate recent</option>
-          <option value="rating">Nota cea mai mare</option>
-          <option value="year">Anul apariției</option>
-          <option value="title">Titlu (A–Z)</option>
-        </select>
+          <label class="visually-hidden" for="genre">Gen</label>
+          <select id="genre" name="genre">
+            <option value="">Toate genurile</option>
+          </select>
 
-        <button class="btn btn-primary" type="submit">Caută</button>
-      </form>
+          <label class="visually-hidden" for="sort">Ordonează după</label>
+          <select id="sort" name="sort">
+            <option value="recent">Adăugate recent</option>
+            <option value="rating">Nota cea mai mare</option>
+            <option value="year">Anul apariției</option>
+            <option value="title">Titlu (A–Z)</option>
+          </select>
 
-      <p class="form-error" data-page-error role="alert"></p>
-      <ul class="film-grid" data-film-grid></ul>
-      <nav class="pagination" data-pagination aria-label="Pagini"></nav>
+          <button class="btn btn-primary" type="submit">Caută</button>
+        </form>
+
+        <p class="form-error" data-page-error role="alert"></p>
+        <ul class="film-grid" data-film-grid></ul>
+        <nav class="pagination" data-pagination aria-label="Pagini"></nav>
+      </div>
+    </section>
+
+    <section class="band band--red" data-band="cyan" aria-labelledby="cta-heading">
+      <div class="container cta-grid">
+        <div>
+          <h2 class="cta-title" id="cta-heading">Hai să-ți facem<br>lista de filme.</h2>
+          <a class="btn btn-pill btn-dark btn-large" href="/register.html" data-cta>Începe acum <span class="pill-dot" aria-hidden="true">→</span></a>
+        </div>
+        <div class="ticket" aria-hidden="true">
+          <div class="ticket-row">
+            <span class="ticket-brand">Filmoteca</span>
+            <span class="ticket-no">Nr. 0019</span>
+          </div>
+          <p class="ticket-title">Bilet de intrare</p>
+          <p class="ticket-sub">Catalog · Recenzii · Lista mea</p>
+          <div class="ticket-row ticket-stub">
+            <span>Rândul 19</span>
+            <span>Locul 20</span>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 

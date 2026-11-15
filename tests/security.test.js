@@ -82,6 +82,17 @@ describe('Protecții generale', () => {
     assert.deepEqual(res.body, { error: 'Corpul cererii nu este JSON valid.' });
   });
 
+  test('din Three.js se servesc doar cele două fișiere necesare, nimic altceva din node_modules', async () => {
+    const { app } = makeApp();
+
+    const module = await request(app).get('/vendor/three/three.module.js').expect(200);
+    assert.match(module.headers['content-type'], /javascript/);
+
+    for (const path of ['/vendor/three/three.cjs', '/vendor/three/..%2Fpackage.json', '/vendor/three/%2e%2e%2f%2e%2e%2f.env', '/vendor/three/']) {
+      assert.equal((await request(app).get(path)).status, 404, path);
+    }
+  });
+
   test('rutele API necunoscute răspund cu 404 JSON, iar fișierele din afara public/ nu sunt servite', async () => {
     const { app } = makeApp();
 

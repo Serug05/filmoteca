@@ -13,6 +13,9 @@ import { genresRouter } from './routes/genres.routes.js';
 import { meRouter } from './routes/me.routes.js';
 import { reviewsRouter } from './routes/reviews.routes.js';
 
+const THREE_DIR = path.join(ROOT_DIR, 'node_modules', 'three', 'build');
+const THREE_FILES = new Set(['three.module.js', 'three.core.js']);
+
 // Construiește aplicația fără să o pornească; testele o folosesc direct, cu o bază de date în memorie.
 export function createApp({ db, config }) {
   const postersDir = path.join(config.uploadsDir, 'posters');
@@ -25,6 +28,15 @@ export function createApp({ db, config }) {
 
   // Doar folderul public/ este servit static, niciodată rădăcina proiectului (.env, baza de date).
   app.use(express.static(path.join(ROOT_DIR, 'public'), { dotfiles: 'ignore' }));
+
+  // Three.js (grafica 3D din prima pagină) e servit de pe propriul server, ca CSP-ul să rămână
+  // „doar scripturi proprii”. Se servesc exact cele două fișiere necesare, nimic altceva din node_modules.
+  app.get('/vendor/three/:file', (req, res, next) => {
+    if (!THREE_FILES.has(req.params.file)) return next();
+    res.type('text/javascript');
+    res.set('Cache-Control', 'public, max-age=604800');
+    res.sendFile(path.join(THREE_DIR, req.params.file));
+  });
 
   // Posterele sunt publice. În folder ajung doar fișiere .webp create de server, cu nume aleatorii.
   app.use('/uploads/posters', express.static(postersDir, { dotfiles: 'deny', index: false, redirect: false }));

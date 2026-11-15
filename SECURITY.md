@@ -45,7 +45,7 @@ Modelul amenințărilor: ce date protejăm, cine ce vede și unde e fiecare prot
 | 10 | XSS stocat/reflectat | afișare doar cu `textContent`, niciodată `innerHTML`; CSP fără inline; `nosniff`; caracterele invizibile respinse | `public/js/`, `middleware/security.js`, `validation/common.js` |
 | 11 | Injecție SQL/NoSQL | doar parametri `?`; SQL din bucăți fixe; `ORDER BY` din listă fixă; `LIKE` cu escape; liste/obiecte respinse | `models/films.js`, `models/admin.js`, `services/search.js` |
 | 12 | Fișiere malițioase sau mari | max. 2 MB, un fișier; sharp acceptă doar JPEG/PNG/WebP reale și le reface ca WebP fără metadate; permisiuni verificate înainte de citire | `services/posters.js`, `middleware/upload.js` |
-| 13 | Path traversal | nume UUID generat de server; static doar `public/` și `uploads/posters/` | `savePoster`, `app.js` |
+| 13 | Path traversal | nume UUID generat de server; static doar `public/`, `uploads/posters/` și două fișiere fixe din Three.js | `savePoster`, `app.js` |
 | 14 | Clickjacking | `frame-ancestors 'none'`, `X-Frame-Options` | `middleware/security.js` |
 | 15 | Scurgeri prin erori | handler generic fără stack/SQL; pagină 404 proprie; fără `X-Powered-By` | `middleware/errors.js`, `app.js` |
 | 16 | Secrete în depozit | `.env` în `.gitignore`, `.env.example` livrat; conturile demo nelistate au parole aleatorii | `.gitignore`, `scripts/seed-lib.js` |

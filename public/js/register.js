@@ -1,10 +1,10 @@
 import { api } from './api.js';
-import { loadCollage } from './collage.js';
+import { startAuthScene3d } from './auth-scene.js';
 import { clearErrors, setBusy, showErrors } from './forms.js';
 import { renderNav } from './nav.js';
 
 if (await renderNav()) location.replace('/');
-loadCollage(document.querySelector('[data-collage]'));
+startAuthScene3d();
 
 const form = document.querySelector('[data-register-form]');
 

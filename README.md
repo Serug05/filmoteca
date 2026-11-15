@@ -22,6 +22,7 @@ Adminul **nu** poate: vedea listele private ale altora, scrie sau edita recenzii
 - **Parole:** Argon2id · **Sesiuni:** token aleator în cookie `HttpOnly`, salvat ca hash în baza de date
 - **Validare:** zod · **Antete de securitate:** helmet (cu Content Security Policy)
 - **Postere:** multer (primire, max. 2 MB) + sharp (verifică imaginea și o reface ca WebP, fără metadate)
+- **Grafică 3D (doar decor):** Three.js, servit de pe propriul server: lanțul cromat care trece prin prima pagină și sfera de postere (`public/js/scene3d.js`). Fără WebGL sau cu „animații reduse” activat în sistem, pagina rămâne statică.
 - **Teste:** `node --test` + supertest
 
 ## Rulare

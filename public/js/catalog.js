@@ -1,5 +1,4 @@
 import { api } from './api.js';
-import { renderCollage } from './collage.js';
 import { element, filmCard, plural, posterElement, renderPagination } from './components.js';
 import { renderNav } from './nav.js';
 
@@ -43,26 +42,62 @@ function describeResults(total, filters) {
   return filters.q ? `${found} pentru „${filters.q}”` : found;
 }
 
-// Rândul „Cele mai apreciate”: primele 5 filme după nota medie, cu numere mari.
-function topItem(film, index) {
-  const rank = element('span', 'rank', String(index + 1));
-  rank.setAttribute('aria-hidden', 'true');
-  const figure = element('div', 'top-figure');
-  figure.append(rank, posterElement(film));
-
-  const link = element('a', 'top-link');
+// Un rând din clasament: număr, titlu mare, detalii și posterul care apare la hover.
+function rankRow(film, index) {
+  const link = element('a', 'rank-row');
   link.href = `/film.html?id=${encodeURIComponent(film.id)}`;
-  link.append(figure, element('span', 'top-title', film.title));
 
-  const item = element('li', 'top-item');
+  const thumb = element('span', 'rank-thumb');
+  thumb.append(posterElement(film));
+  link.append(
+    element('span', 'rank-no', String(index + 1).padStart(2, '0')),
+    element('span', 'rank-title', film.title),
+    element('span', 'rank-meta', `${film.year} · ${film.genreLabel}`),
+    element('span', 'rank-score', `★ ${film.rating.average.toLocaleString('ro-RO')}`),
+    thumb,
+  );
+
+  const item = document.createElement('li');
   item.append(link);
   return item;
 }
 
+// Antetul e transparent peste secțiunea deschisă și devine închis după ce derulezi.
+function watchHeader() {
+  const header = document.querySelector('[data-header]');
+  const update = () => header.classList.toggle('is-scrolled', window.scrollY > 40);
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+}
+
+// Grafica 3D se încarcă separat: dacă browserul nu are WebGL sau ceva eșuează,
+// pagina rămâne întreagă, doar cu trei postere statice în locul sferei.
+async function start3d(films) {
+  const canvas = document.querySelector('[data-scene]');
+  const stage = document.querySelector('[data-stage]');
+  const posterUrls = films.map((film) => film.posterUrl).filter(Boolean);
+
+  try {
+    const { startHomeScene, supportsWebGL } = await import('./scene3d.js');
+    if (!supportsWebGL() || !posterUrls.length) throw new Error('3D indisponibil');
+    startHomeScene({ canvas, stage, posterUrls });
+  } catch {
+    canvas.hidden = true;
+    stage.classList.add('stage-fallback');
+    stage.replaceChildren(...films.slice(0, 3).map((film) => posterElement(film)));
+  }
+}
+
 async function main() {
+  watchHeader();
   const user = await renderNav();
   document.querySelector('[data-add-film]').hidden = !user;
-  document.querySelector('[data-guest-note]').hidden = Boolean(user);
+  for (const node of document.querySelectorAll('[data-guest-only]')) node.hidden = Boolean(user);
+  if (user) {
+    const cta = document.querySelector('[data-cta]');
+    cta.href = '/lista-mea.html';
+    cta.firstChild.textContent = 'Deschide lista mea ';
+  }
 
   try {
     const genreValues = await loadGenres();
@@ -72,25 +107,21 @@ async function main() {
     form.elements.q.value = filters.q ?? '';
     form.elements.genre.value = filters.genre ?? '';
     form.elements.sort.value = filters.sort ?? 'recent';
-    document.querySelector('#hero-q').value = filters.q ?? '';
 
     const [data, best] = await Promise.all([
       api(`/films?${new URLSearchParams({ ...filters, page: String(page) })}`),
       api('/films?sort=rating'),
     ]);
 
-    renderCollage(document.querySelector('[data-collage]'), best.films);
-
+    document.querySelector('[data-film-count]').textContent = String(best.total);
     const top = best.films.filter((film) => film.rating.count > 0).slice(0, 5);
-    if (!browsing && top.length) {
-      document.querySelector('[data-top-row]').replaceChildren(...top.map(topItem));
-      document.querySelector('[data-top]').hidden = false;
-    }
+    document.querySelector('[data-top-row]').replaceChildren(...top.map(rankRow));
 
     grid.replaceChildren(...data.films.map(filmCard));
     summary.textContent = describeResults(data.total, filters);
     renderPagination(document.querySelector('[data-pagination]'), data.page, data.totalPages, filters);
 
+    start3d(best.films);
     if (browsing) document.querySelector('#catalog').scrollIntoView();
   } catch (error) {
     pageError.textContent = error.message;

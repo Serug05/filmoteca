@@ -97,13 +97,38 @@ h3 {
   backdrop-filter: blur(10px);
 }
 
-.site-header--overlay {
-  position: absolute;
+/* Pe prima pagină: fix, transparent peste secțiunea deschisă (text închis), închis după scroll */
+.site-header--home {
+  position: fixed;
   left: 0;
   right: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
-  border-bottom: none;
+  top: 0;
+  background: transparent;
+  border-bottom-color: transparent;
   backdrop-filter: none;
+  transition: background-color 0.25s, border-color 0.25s;
+}
+
+.site-header--home:not(.is-scrolled) .nav a:not(.btn),
+.site-header--home:not(.is-scrolled) .nav-user {
+  color: #27272a;
+}
+
+.site-header--home:not(.is-scrolled) .nav a:not(.btn):hover,
+.site-header--home:not(.is-scrolled) .nav a[aria-current="page"] {
+  color: #000;
+}
+
+.site-header--home:not(.is-scrolled) .btn-ghost {
+  color: #0c0c0f;
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.site-header--home.is-scrolled {
+  background: rgba(8, 8, 11, 0.92);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .header-inner {
@@ -237,186 +262,390 @@ a.btn {
   font-size: 1.25rem;
 }
 
-.chevron {
-  font-size: 1.5em;
-  line-height: 0.6;
-}
+/* ---------- Scena 3D și secțiunile prima paginii ---------- */
 
-/* ---------- Prima pagină: hero ---------- */
-
-.hero {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-height: min(82vh, 760px);
-  display: flex;
-  align-items: center;
-  padding: 120px 0 140px;
-}
-
-.hero-collage {
-  position: absolute;
-  inset: -20% -10%;
-  z-index: -2;
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 14px;
-  transform: rotate(-10deg) scale(1.1);
-  opacity: 0.9;
-}
-
-.hero-collage img {
+/* Ordinea straturilor: fundalul secțiunii (::before, z-index -2) → scena 3D (-1) → textul.
+   Secțiunile nu au voie să creeze propriul „stacking context” (fără z-index, transform, opacity),
+   altfel lanțul ar ajunge în spatele fundalurilor lor. */
+.scene-canvas {
+  position: fixed;
+  inset: 0;
   width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: 8px;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 
-.hero::before {
+.scene-canvas.is-ready {
+  opacity: 1;
+}
+
+.band {
+  position: relative;
+  padding: 96px 0;
+}
+
+.band::before {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0.75) 100%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.95));
+  z-index: -2;
+  background: var(--band-bg, transparent);
 }
 
-.hero-content {
-  text-align: center;
-  max-width: 880px;
+.band--light {
+  --band-bg: #ece9e3;
+  color: #0c0c0f;
 }
 
-.hero h1 {
-  font-size: clamp(2.2rem, 6vw, 4rem);
-  font-weight: 900;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+.band--graphite {
+  --band-bg: #17171c;
 }
 
-.hero-sub {
-  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-  color: #e4e4e7;
-  margin: 0 auto 28px;
-  max-width: 640px;
+.band--dark {
+  --band-bg: #0a0a0d;
 }
 
-.hero-search {
-  display: flex;
-  gap: 10px;
-  max-width: 680px;
-  margin: 0 auto;
+.band--red {
+  --band-bg: linear-gradient(135deg, #8f0d16 0%, #d42a37 55%, #7a0b14 100%);
 }
 
-.hero-search input {
-  flex: 1;
-  min-width: 0;
-  padding: 16px 18px;
-  font-size: 1.1rem;
-  background: rgba(10, 10, 12, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 6px;
-}
-
-.hero-note {
-  margin-top: 18px;
-  color: #d4d4d8;
-}
-
-.hero-note a {
-  color: #fff;
-  font-weight: 700;
-}
-
-/* Curba luminoasă dintre hero și conținut */
-.hero-curve {
-  position: absolute;
-  left: -15%;
-  right: -15%;
-  bottom: -90px;
-  height: 140px;
-  border-top: 4px solid transparent;
-  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  background:
-    linear-gradient(var(--bg), var(--bg)) padding-box,
-    linear-gradient(90deg, var(--accent-2), var(--accent) 35%, var(--accent) 65%, var(--accent-2)) border-box;
-  box-shadow: 0 -18px 60px rgba(230, 57, 70, 0.35);
-}
-
-.section-title {
-  font-size: clamp(1.4rem, 3vw, 1.9rem);
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
   font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-hover);
 }
 
-.home-main {
-  position: relative;
-  padding-top: 8px;
-}
-
-/* ---------- Top filme ---------- */
-
-.top-section {
-  margin-bottom: 48px;
-}
-
-.top-row {
-  list-style: none;
-  margin: 0;
-  padding: 8px 0 12px;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 22px;
-}
-
-.top-link {
-  display: block;
-  text-decoration: none;
-  color: var(--text);
-}
-
-.top-figure {
-  position: relative;
-  padding-left: 24%;
-}
-
-.top-link .poster {
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  transition: transform 0.2s;
-}
-
-.top-link:hover .poster,
-.top-link:focus-visible .poster {
-  transform: translateY(-4px) scale(1.03);
-}
-
-.top-link:focus-visible {
-  outline: none;
-}
-
-.top-link:focus-visible .poster {
-  box-shadow: var(--focus);
-}
-
-.rank {
-  position: absolute;
-  left: -4px;
-  bottom: -10px;
-  z-index: 1;
-  font-size: clamp(5rem, 9vw, 8rem);
+.band-title {
+  font-size: clamp(2rem, 5.4vw, 3.8rem);
   font-weight: 900;
   line-height: 1;
-  color: var(--bg);
-  -webkit-text-stroke: 3px #e5e5e5;
-  paint-order: stroke fill;
-  text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
 }
 
-.top-title {
-  display: block;
-  margin: 14px 0 0 24%;
-  font-weight: 700;
+/* Hero deschis, cu numele uriaș în spatele scenei 3D */
+.hero3d {
+  overflow: hidden;
+  padding: 128px 0 0;
+}
+
+.hero3d-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.hero3d-title {
+  margin: 0 0 22px;
+  font-size: clamp(2rem, 4.4vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.hero3d-lead {
+  max-width: 46ch;
+  margin: 0 0 26px;
+  font-size: 1.08rem;
+  color: #3f3f46;
+}
+
+.hero3d-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero3d-stats {
+  justify-self: end;
+  max-width: 300px;
+  text-align: right;
+}
+
+.stat-big {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  line-height: 0.9;
+}
+
+.stat-big strong {
+  font-size: clamp(3.2rem, 7vw, 5.6rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.stat-big span {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.stat-text {
+  margin: 12px 0 0;
+  color: #52525b;
   font-size: 0.95rem;
+}
+
+.hero3d-stage {
+  height: clamp(300px, 54vh, 600px);
+}
+
+.wordmark {
+  position: relative;
+  z-index: -2;
+  margin: calc(-1 * clamp(70px, 9vw, 150px)) 0 0;
+  font-size: 17vw;
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #0c0c0f;
+  user-select: none;
+}
+
+/* Varianta fără 3D: trei postere în evantai */
+.stage-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-fallback .poster {
+  width: min(28vw, 210px);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.stage-fallback .poster:nth-child(1) {
+  transform: translateX(30%) rotate(-10deg);
+}
+
+.stage-fallback .poster:nth-child(2) {
+  position: relative;
+  transform: translateY(-6%) scale(1.08);
+}
+
+.stage-fallback .poster:nth-child(3) {
+  transform: translateX(-30%) rotate(10deg);
+}
+
+/* Butoane rotunjite („pill”) */
+.btn-pill {
+  border-radius: 999px;
+  padding: 10px 10px 10px 22px;
+}
+
+.btn-pill:not(:has(.pill-dot)) {
+  padding: 10px 22px;
+}
+
+.btn-dark {
+  background: #0c0c0f;
+  color: #fff;
+}
+
+.btn-dark:hover {
+  background: #2a2a31;
+}
+
+.btn-outline {
+  background: transparent;
+  color: inherit;
+  border-color: currentColor;
+}
+
+.btn-outline:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.pill-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+}
+
+/* Clasamentul, ca o listă mare */
+.rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.rank-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 20px 4px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.rank-no {
+  font-weight: 800;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-title {
+  font-size: clamp(1.5rem, 4.2vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
+  transition: transform 0.25s, color 0.25s;
+}
+
+.rank-meta {
+  color: var(--muted);
+}
+
+.rank-score {
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.rank-thumb {
+  position: absolute;
+  right: 24%;
+  top: 50%;
+  width: 104px;
+  opacity: 0;
+  transform: translateY(-50%) rotate(-6deg) scale(0.9);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+
+.rank-thumb .poster {
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.rank-row:hover .rank-title,
+.rank-row:focus-visible .rank-title {
+  transform: translateX(14px);
+  color: var(--accent-hover);
+}
+
+.rank-row:hover .rank-thumb,
+.rank-row:focus-visible .rank-thumb {
+  opacity: 1;
+  transform: translateY(-50%) rotate(-6deg) scale(1);
+}
+
+.rank-row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Finalul roșu, cu biletul de cinema */
+.cta-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 40px;
+}
+
+.cta-title {
+  margin-bottom: 30px;
+  font-size: clamp(2.3rem, 6vw, 4.8rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: rgb(80, 220, 255);
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.25);
+}
+
+.ticket {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 340px);
+  padding: 26px 26px 18px;
+  background: #0c0c0f;
+  color: #f4f4f5;
+  border-radius: 16px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+  transform: rotate(-6deg);
+}
+
+.ticket::before,
+.ticket::after {
+  content: "";
+  position: absolute;
+  top: 66%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #c3212e;
+}
+
+.ticket::before {
+  left: -13px;
+}
+
+.ticket::after {
+  right: -13px;
+}
+
+.ticket-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ticket-brand {
+  color: var(--accent-hover);
+}
+
+.ticket-no {
+  color: #a1a1aa;
+}
+
+.ticket-title {
+  margin: 26px 0 6px;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ticket-sub {
+  margin: 0 0 30px;
+  color: #a1a1aa;
+}
+
+.ticket-stub {
+  padding-top: 16px;
+  border-top: 2px dashed #3f3f46;
+  color: rgb(80, 220, 255);
 }
 
 /* ---------- Catalog ---------- */
@@ -575,16 +804,6 @@ form {
   flex-direction: column;
 }
 
-.hero-search {
-  flex-direction: row;
-  align-items: center;
-}
-
-.hero-search input,
-.hero-search .btn {
-  height: 60px;
-}
-
 label {
   font-weight: 600;
   margin-top: 14px;
@@ -704,24 +923,21 @@ form > .btn,
 
 .auth-page {
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px 64px;
-}
-
-.auth-page .hero-collage {
-  opacity: 0.4;
+  padding: 56px 16px 72px;
 }
 
 .auth-page::before {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.55) 50%, rgba(0, 0, 0, 0.9));
+  z-index: -2;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(230, 57, 70, 0.28), transparent 55%),
+    radial-gradient(ellipse at 90% 95%, rgba(80, 220, 255, 0.14), transparent 50%),
+    var(--bg);
 }
 
 .auth-card {
@@ -1253,19 +1469,22 @@ form > .btn,
 /* ---------- Ecrane mici ---------- */
 
 @media (max-width: 900px) {
-  .top-row {
-    grid-template-columns: repeat(5, minmax(150px, 1fr));
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 18px;
+  .hero3d-top,
+  .cta-grid {
+    grid-template-columns: 1fr;
   }
 
-  .top-item {
-    scroll-snap-align: start;
+  .hero3d-stats {
+    justify-self: start;
+    text-align: left;
   }
 
-  .hero-collage {
-    grid-template-columns: repeat(5, 1fr);
+  .stat-big {
+    justify-content: flex-start;
+  }
+
+  .rank-thumb {
+    display: none;
   }
 }
 
@@ -1295,6 +1514,19 @@ form > .btn,
   .film-detail [data-poster] {
     max-width: 240px;
   }
+
+  .rank-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 10px 14px;
+  }
+
+  .rank-meta {
+    display: none;
+  }
+
+  .band {
+    padding: 72px 0;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1302,18 +1534,12 @@ form > .btn,
     font-size: 1.35rem;
   }
 
-  .hero {
-    padding: 140px 0 120px;
-    min-height: 0;
-  }
-
-  .hero-search {
-    flex-direction: column;
-    align-items: stretch;
+  .hero3d {
+    padding-top: 150px;
   }
 
   .btn-large {
-    padding: 14px 22px;
+    padding: 12px 12px 12px 20px;
     font-size: 1.1rem;
   }
 
