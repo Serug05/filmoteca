@@ -6,6 +6,7 @@ import {
   AmbientLight,
   BackSide,
   BoxGeometry,
+  CanvasTexture,
   CatmullRomCurve3,
   Color,
   CylinderGeometry,
@@ -25,7 +26,6 @@ import {
   Scene,
   SphereGeometry,
   SRGBColorSpace,
-  TextureLoader,
   TorusGeometry,
   Vector3,
   WebGLRenderer,
@@ -222,40 +222,190 @@ function createStage(canvas, tint, build) {
 
 // ---------- Prima pagină ----------
 
-// Posterele agățate de lanțul de pe orbită: o ramă închisă, imaginea și un cârlig metalic.
-function createHangingPosters(scene, posterUrls, count) {
-  const loader = new TextureLoader();
-  const frameMaterial = new MeshBasicMaterial({ color: '#0c0c0f', side: DoubleSide });
-  const hookMaterial = new MeshStandardMaterial({ color: '#d4d4d8', metalness: 1, roughness: 0.25 });
-  const imageGeometry = new PlaneGeometry(1, 1.5);
-  const frameGeometry = new PlaneGeometry(1.08, 1.58);
-  const hookGeometry = new CylinderGeometry(0.02, 0.02, 1, 8);
+// Banda de film retro: o peliculă de 35 mm desenată într-un canvas 2D și folosită ca textură.
+// Cadrele sunt posterele filmelor (în tonuri sepia), cu perforații pe margini, marcaje portocalii,
+// zgârieturi, praf și granulație. Perforațiile sunt tăiate (transparente), nu doar desenate.
+const FILM = { frames: 16, cell: 250, frameWidth: 225, frameHeight: 150, height: 256, holePitch: 37.5 };
 
-  const materials = posterUrls.map((url) => {
-    const texture = loader.load(url);
-    texture.colorSpace = SRGBColorSpace;
-    texture.anisotropy = 4;
-    return new MeshBasicMaterial({ map: texture, side: DoubleSide });
+// Numere pseudo-aleatoare cu sămânță fixă: zgârieturile și praful arată la fel la fiecare încărcare.
+function seededRandom(seed) {
+  let state = seed;
+  return () => {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+}
+
+function loadImage(url) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = url;
+  });
+}
+
+function drawFilmStrip(ctx, images) {
+  const { frames, cell, frameWidth, frameHeight, height, holePitch } = FILM;
+  const width = frames * cell;
+  const frameY = (height - frameHeight) / 2;
+  const random = seededRandom(19);
+
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.clearRect(0, 0, width, height);
+
+  // Pelicula: acetat maro-chihlimbar, puțin mai deschis spre margini.
+  const base = ctx.createLinearGradient(0, 0, 0, height);
+  base.addColorStop(0, '#6b3e16');
+  base.addColorStop(0.5, '#3b2210');
+  base.addColorStop(1, '#6b3e16');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, width, height);
+
+  for (let i = 0; i < frames; i += 1) {
+    const x = i * cell + (cell - frameWidth) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x, frameY, frameWidth, frameHeight, 10);
+    ctx.clip();
+    ctx.fillStyle = '#140b05';
+    ctx.fillRect(x, frameY, frameWidth, frameHeight);
+
+    const image = images.length ? images[i % images.length] : null;
+    if (image) {
+      // Imaginea umple cadrul („cover”), apoi primește o tentă sepia.
+      const scale = Math.max(frameWidth / image.width, frameHeight / image.height);
+      const w = image.width * scale;
+      const h = image.height * scale;
+      ctx.drawImage(image, x + (frameWidth - w) / 2, frameY + (frameHeight - h) / 2, w, h);
+      ctx.globalCompositeOperation = 'color';
+      ctx.fillStyle = 'rgba(190, 130, 70, 0.6)';
+      ctx.fillRect(x, frameY, frameWidth, frameHeight);
+      // O lumină caldă peste cadru, ca la o proiecție veche.
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = 'rgba(255, 196, 120, 0.16)';
+      ctx.fillRect(x, frameY, frameWidth, frameHeight);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Vinietă: colțurile cadrului mai întunecate, ca la fotografiile vechi.
+    const cx = x + frameWidth / 2;
+    const cy = frameY + frameHeight / 2;
+    const vignette = ctx.createRadialGradient(cx, cy, frameHeight * 0.3, cx, cy, frameWidth * 0.68);
+    vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    vignette.addColorStop(1, 'rgba(25, 12, 0, 0.6)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(x, frameY, frameWidth, frameHeight);
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(x, frameY, frameWidth, frameHeight, 10);
+    ctx.stroke();
+
+    // Marcajele de pe margine: numărul cadrului și „numele” peliculei.
+    ctx.fillStyle = 'rgba(255, 168, 56, 0.85)';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillText('FILMOTECA 400', x + 8, frameY - 8);
+    ctx.fillText(`▸ ${i + 1}`, x + 8, frameY + frameHeight + 17);
+    ctx.fillText(`${i + 1}A`, x + frameWidth * 0.62, frameY + frameHeight + 17);
+  }
+
+  // Zgârieturi verticale și praf.
+  for (let s = 0; s < 46; s += 1) {
+    const x = random() * width;
+    const y = random() * height * 0.5;
+    ctx.strokeStyle = `rgba(255, 238, 210, ${0.08 + random() * 0.22})`;
+    ctx.lineWidth = random() < 0.85 ? 1 : 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (random() - 0.5) * 8, y + height * (0.2 + random() * 0.8));
+    ctx.stroke();
+  }
+  for (let d = 0; d < 260; d += 1) {
+    ctx.fillStyle = random() < 0.5 ? `rgba(255, 240, 220, ${0.15 + random() * 0.35})` : `rgba(0, 0, 0, ${0.2 + random() * 0.4})`;
+    ctx.beginPath();
+    ctx.arc(random() * width, random() * height, 0.5 + random() * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Granulație: fiecare pixel e puțin mai deschis sau mai închis.
+  const pixels = ctx.getImageData(0, 0, width, height);
+  for (let p = 0; p < pixels.data.length; p += 4) {
+    const noise = (random() - 0.5) * 26;
+    pixels.data[p] += noise;
+    pixels.data[p + 1] += noise;
+    pixels.data[p + 2] += noise;
+  }
+  ctx.putImageData(pixels, 0, 0);
+
+  // Perforațiile: tăiate de tot (transparente), sus și jos.
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = '#000';
+  for (let x = (holePitch - 18) / 2; x < width; x += holePitch) {
+    for (const y of [10, height - 10 - 22]) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, 18, 22, 4);
+      ctx.fill();
+    }
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// Banda: un cilindru deschis (fără capace), ușor ondulat, cu pelicula ca textură de jur împrejur.
+function createFilmBand(scene, posterUrls) {
+  const canvas = document.createElement('canvas');
+  canvas.width = FILM.frames * FILM.cell;
+  canvas.height = FILM.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  drawFilmStrip(ctx, []);
+
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = 8;
+  Promise.all(posterUrls.slice(0, FILM.frames).map(loadImage)).then((images) => {
+    drawFilmStrip(ctx, images.filter(Boolean));
+    texture.needsUpdate = true;
   });
 
-  return Array.from({ length: count }, (_, i) => {
-    const card = new Group();
-    const frame = new Mesh(frameGeometry, frameMaterial);
-    frame.position.z = -0.6;
-    const image = new Mesh(imageGeometry, materials[i % materials.length]);
-    card.add(frame, image);
+  // Înălțimea benzii păstrează proporțiile texturii pe circumferința cercului (raza 1).
+  const bandHeight = (2 * Math.PI * FILM.height) / canvas.width;
+  const geometry = new CylinderGeometry(1, 1, bandHeight, 180, 1, true);
+  const positions = geometry.getAttribute('position');
+  for (let i = 0; i < positions.count; i += 1) {
+    const angle = Math.atan2(positions.getX(i), positions.getZ(i));
+    positions.setY(i, positions.getY(i) + Math.sin(angle * 3) * 0.035);
+  }
 
-    const hook = new Mesh(hookGeometry, hookMaterial);
-    scene.add(card, hook);
-    return { card, hook };
-  });
+  const band = new Mesh(
+    geometry,
+    new MeshStandardMaterial({
+      map: texture,
+      emissiveMap: texture,
+      emissive: '#ffffff',
+      emissiveIntensity: 0.45,
+      roughness: 0.4,
+      metalness: 0,
+      envMapIntensity: 0.6,
+      alphaTest: 0.5,
+      side: DoubleSide,
+    }),
+  );
+
+  // Înclinarea orbitei: partea din față a benzii e mai jos și mai aproape de privitor.
+  const group = new Group();
+  group.rotation.set(0.38, 0, -0.12);
+  group.add(band);
+  scene.add(group);
+  return { group, band };
 }
 
 export function startHomeScene({ canvas, stage, posterUrls }) {
   const small = isSmallScreen();
-  const linkSize = small ? 18 : 28;
 
-  createStage(canvas, '#ffffff', ({ scene, chainMaterial, still }) => {
+  createStage(canvas, '#ffffff', ({ scene, still }) => {
     // Sfera din mijloc: netedă, ca o perlă închisă la culoare, cu irizații fine.
     const sphere = new Mesh(
       new SphereGeometry(1, 96, 64),
@@ -271,28 +421,20 @@ export function startHomeScene({ canvas, stage, posterUrls }) {
     );
     scene.add(sphere);
 
-    // Două inele subțiri, luminoase, în jurul sferei (ca liniile de orbită ale unei planete).
-    const ringMaterial = new MeshBasicMaterial({ color: '#e63946', transparent: true, opacity: 0.4 });
+    // Două inele subțiri, chihlimbarii, în jurul sferei, ca orbitele unei planete.
+    const ringMaterial = new MeshBasicMaterial({ color: '#d9a441', transparent: true, opacity: 0.45 });
     const rings = [new Mesh(new TorusGeometry(1, 0.006, 8, 160), ringMaterial), new Mesh(new TorusGeometry(1, 0.004, 8, 160), ringMaterial)];
     scene.add(...rings);
 
-    const orbit = createChainLine(scene, { linkSize, maxLinks: 160, material: chainMaterial, closed: true });
-    const posters = createHangingPosters(scene, posterUrls, small ? 6 : 8);
-
-    const center = new Vector3();
-    const spot = new Vector3();
-    let radius = 1;
-    let orbitRadius = 1;
-    let posterWidth = 1;
+    const film = createFilmBand(scene, posterUrls);
 
     return {
       layout(viewport) {
         const vw = viewport.width;
         const box = pageBox(stage);
-        radius = Math.min(box.width, box.height) * 0.27;
-        orbitRadius = Math.min(radius * 2.05, vw * (small ? 0.34 : 0.42));
-        posterWidth = radius * (small ? 0.5 : 0.56);
-        center.set(box.centerX - vw / 2, -(box.top + box.height * 0.4), 0);
+        const radius = Math.min(box.width, box.height) * 0.27;
+        const orbitRadius = Math.min(radius * 2.05, vw * (small ? 0.4 : 0.42));
+        const center = new Vector3(box.centerX - vw / 2, -(box.top + box.height * 0.42), 0);
 
         sphere.position.copy(center);
         sphere.scale.setScalar(radius);
@@ -300,44 +442,20 @@ export function startHomeScene({ canvas, stage, posterUrls }) {
         rings[0].scale.setScalar(radius * 1.35);
         rings[0].rotation.set(Math.PI / 2 - 0.35, 0.15, 0);
         rings[1].position.copy(center);
-        rings[1].scale.setScalar(radius * 2.25);
+        rings[1].scale.setScalar(radius * 2.6);
         rings[1].rotation.set(Math.PI / 2 - 0.2, -0.25, 0);
 
-        // Orbita lanțului: un cerc înclinat, cu partea din față mai jos și mai aproape de privitor.
-        const tilt = new Matrix4().makeRotationX(0.38).multiply(new Matrix4().makeRotationZ(-0.12));
-        const points = Array.from({ length: 24 }, (_, k) => {
-          const angle = (k / 24) * Math.PI * 2;
-          return new Vector3(Math.cos(angle) * orbitRadius, 0, Math.sin(angle) * orbitRadius)
-            .applyMatrix4(tilt)
-            .add(center);
-        });
-        orbit.setPath(points);
-
-        for (const { card } of posters) card.scale.set(posterWidth, posterWidth, 1);
+        film.group.position.copy(center);
+        film.group.scale.setScalar(orbitRadius);
       },
 
+      // Pelicula „rulează” în jurul sferei; scroll-ul o împinge puțin mai repede.
       update({ time, scrollY }) {
-        if (!still) {
-          sphere.rotation.y = time * 0.15;
-          rings[0].rotation.z = time * 0.05;
-          rings[1].rotation.z = -time * 0.035;
-        }
-
-        // Orbita se rotește încet; scroll-ul o împinge puțin mai repede.
-        const orbitOffset = still ? 0 : time * 0.02 + scrollY * 0.00012;
-        orbit.place(orbitOffset);
-
-        // Posterele stau agățate la distanțe egale pe orbită, mereu cu fața spre privitor.
-        const hookLength = posterWidth * 0.35;
-        posters.forEach(({ card, hook }, j) => {
-          const t = (((j / posters.length + orbitOffset) % 1) + 1) % 1;
-          orbit.curve.getPointAt(t, spot);
-          hook.position.set(spot.x, spot.y - hookLength / 2, spot.z);
-          hook.scale.set(posterWidth, hookLength, posterWidth);
-          card.position.set(spot.x, spot.y - hookLength - posterWidth * 0.75, spot.z);
-          const angle = t * Math.PI * 2;
-          card.rotation.set(0, -Math.cos(angle) * 0.45, still ? 0 : Math.sin(time * 1.3 + j) * 0.05);
-        });
+        if (still) return;
+        sphere.rotation.y = time * 0.15;
+        rings[0].rotation.z = time * 0.05;
+        rings[1].rotation.z = -time * 0.035;
+        film.band.rotation.y = -(time * 0.12 + scrollY * 0.0008);
       },
     };
   });
