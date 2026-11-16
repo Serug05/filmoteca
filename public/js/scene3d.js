@@ -1,6 +1,6 @@
-// Grafica 3D (doar decor): un lanț cromat care trece prin toată pagina și alunecă la scroll,
-// plus, pe prima pagină, o sferă din postere în jurul unei stele metalice.
-// Lumina se schimbă după secțiunea din mijlocul ecranului (atributul data-band): albă, roșie, cyan.
+// Grafica 3D (doar decor).
+// Prima pagină: o sferă lucioasă în mijloc, înconjurată de un lanț cromat pe orbită, cu posterele
+// filmelor agățate de el. Autentificarea: un lanț roșiatic, pe diagonală, în spatele formularului.
 import {
   ACESFilmicToneMapping,
   AmbientLight,
@@ -8,21 +8,22 @@ import {
   BoxGeometry,
   CatmullRomCurve3,
   Color,
-  ConeGeometry,
+  CylinderGeometry,
   DirectionalLight,
   DoubleSide,
   Group,
-  IcosahedronGeometry,
   InstancedMesh,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   PlaneGeometry,
   PMREMGenerator,
   Quaternion,
   Scene,
+  SphereGeometry,
   SRGBColorSpace,
   TextureLoader,
   TorusGeometry,
@@ -30,11 +31,6 @@ import {
   WebGLRenderer,
 } from '/vendor/three/three.module.js';
 
-const LIGHTS = {
-  white: new Color('#ffffff'),
-  red: new Color('#ff4655'),
-  cyan: new Color('rgb(80, 220, 255)'),
-};
 const UP = new Vector3(0, 1, 0);
 const FOV = 35;
 const FRAME_SAMPLES = 600;
@@ -51,15 +47,18 @@ export function supportsWebGL() {
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isSmallScreen = () => window.innerWidth < 700;
 
-// Poziția unui element în pagină (nu pe ecran): sus, jos, centru.
+// Poziția unui element în pagină (nu pe ecran).
 function pageBox(element) {
   const rect = element.getBoundingClientRect();
   const top = rect.top + window.scrollY;
   return { top, bottom: top + rect.height, height: rect.height, centerX: rect.left + rect.width / 2, width: rect.width };
 }
 
-// Un „studio” virtual: o cameră gri cu panouri luminoase. Cromul lanțului îl reflectă;
-// fără el, metalul ar ieși negru.
+// Coordonatele 3D sunt pixeli din pagină: x față de mijlocul ecranului, iar y în jos devine y negativ.
+const toWorld = ([x, y, z]) => new Vector3(x, -y, z);
+
+// Un „studio” virtual: o cameră gri cu panouri luminoase. Metalul și sfera îl reflectă;
+// fără el, cromul ar ieși negru.
 function studioEnvironment(renderer) {
   const studio = new Scene();
   studio.add(new Mesh(new BoxGeometry(10, 10, 10), new MeshBasicMaterial({ color: new Color(0.32, 0.32, 0.36), side: BackSide })));
@@ -87,65 +86,60 @@ function studioEnvironment(renderer) {
   return texture;
 }
 
-// O za: un tor (inel) întins pe verticală. Toate zalele sunt desenate dintr-o dată (InstancedMesh).
-function createChain(linkSize, maxLinks) {
+// Un lanț de-a lungul unei curbe. Toate zalele lui sunt desenate dintr-o dată (InstancedMesh).
+// O za este un tor (inel) întins pe verticală; fiecare a doua za e rotită cu 90°, ca să se prindă.
+function createChainLine(scene, { linkSize, maxLinks, material, closed }) {
   const geometry = new TorusGeometry(0.5, 0.13, 12, 36);
   geometry.scale(linkSize, linkSize * 1.6, linkSize);
-  const material = new MeshStandardMaterial({ color: '#ffffff', metalness: 1, roughness: 0.2, emissive: '#000000' });
-  const chain = new InstancedMesh(geometry, material, maxLinks);
-  chain.frustumCulled = false;
-  // Distanța dintre zale e puțin mai mică decât golul din interiorul unei zale, ca să se prindă.
-  return { mesh: chain, material, pitch: linkSize * 1.05 };
+  const mesh = new InstancedMesh(geometry, material, maxLinks);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+
+  // Distanța dintre zale e puțin mai mică decât golul din interiorul unei zale.
+  const pitch = linkSize * 1.05;
+  const point = new Vector3();
+  const basis = new Matrix4();
+  const matrix = new Matrix4();
+  const quaternion = new Quaternion();
+  const quarterTurn = new Quaternion().setFromAxisAngle(UP, Math.PI / 2);
+  const unit = new Vector3(1, 1, 1);
+  const line = { curve: null, frames: null, length: 1, count: 0 };
+
+  line.setPath = (points) => {
+    line.curve = new CatmullRomCurve3(points, closed, 'centripetal');
+    line.curve.arcLengthDivisions = 2000;
+    line.length = line.curve.getLength();
+    line.frames = line.curve.computeFrenetFrames(FRAME_SAMPLES, closed);
+    // Pe o buclă închisă, numărul de zale e par, ca alternanța să se lege la capăt.
+    const count = Math.round(line.length / pitch);
+    line.count = Math.min(maxLinks, closed ? count - (count % 2) : count);
+  };
+
+  // offset ∈ [0, 1): cât de mult au alunecat zalele de-a lungul curbei.
+  line.place = (offset) => {
+    const { curve, frames, count } = line;
+    for (let i = 0; i < count; i += 1) {
+      const t = (((i / count + offset) % 1) + 1) % 1;
+      const frame = Math.round(t * FRAME_SAMPLES);
+      curve.getPointAt(t, point);
+      // Axa lungă a zalei (y) urmează curba. Ordinea (binormală, tangentă, normală) dă o rotație
+      // corectă; cu (normală, tangentă, binormală) baza ar fi în oglindă.
+      basis.makeBasis(frames.binormals[frame], frames.tangents[frame], frames.normals[frame]);
+      quaternion.setFromRotationMatrix(basis);
+      if (i % 2) quaternion.multiply(quarterTurn);
+      matrix.compose(point, quaternion, unit);
+      mesh.setMatrixAt(i, matrix);
+    }
+    mesh.count = count;
+    mesh.instanceMatrix.needsUpdate = true;
+  };
+
+  return line;
 }
 
-// Sfera de postere din prima pagină, cu o stea metalică în centru. Construită pe raza 1,
-// apoi mărită la dimensiunea zonei din pagină.
-function createPosterSphere(posterUrls, tiles) {
-  const group = new Group();
-  const loader = new TextureLoader();
-  const materials = posterUrls.map((url) => {
-    const texture = loader.load(url);
-    texture.colorSpace = SRGBColorSpace;
-    return new MeshBasicMaterial({ map: texture, side: DoubleSide });
-  });
-
-  const tileGeometry = new PlaneGeometry(0.38, 0.57);
-  const direction = new Vector3();
-  for (let i = 0; i < tiles; i += 1) {
-    const y = 1 - ((i + 0.5) * 2) / tiles;
-    const ring = Math.sqrt(1 - y * y);
-    const angle = i * Math.PI * (3 - Math.sqrt(5));
-    direction.set(Math.cos(angle) * ring, y, Math.sin(angle) * ring);
-
-    const tile = new Mesh(tileGeometry, materials[i % materials.length]);
-    tile.position.copy(direction);
-    tile.lookAt(direction.clone().multiplyScalar(2));
-    group.add(tile);
-  }
-
-  const metal = new MeshStandardMaterial({ color: '#141418', metalness: 1, roughness: 0.25 });
-  const core = new IcosahedronGeometry(0.26, 0);
-  group.add(new Mesh(core, metal));
-
-  const spike = new ConeGeometry(0.06, 0.42, 8);
-  const vertex = new Vector3();
-  const seen = new Set();
-  const positions = core.getAttribute('position');
-  for (let i = 0; i < positions.count; i += 1) {
-    vertex.fromBufferAttribute(positions, i).normalize();
-    const key = vertex.toArray().map((n) => n.toFixed(3)).join();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const cone = new Mesh(spike, metal);
-    cone.position.copy(vertex).multiplyScalar(0.36);
-    cone.quaternion.setFromUnitVectors(UP, vertex);
-    group.add(cone);
-  }
-  return group;
-}
-
-// Motorul comun: randare, cameră care urmărește scroll-ul, lanțul și culoarea luminii.
-function createStage(canvas, { path, sphere, linkSize, maxLinks, driftPerSecond, scrollPull }) {
+// Motorul comun: randare, lumini și camera care urmărește scroll-ul.
+// `tint` e culoarea cromului: reflexiile lanțului o preiau, iar o strălucire slabă o întărește.
+function createStage(canvas, tint, build) {
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = ACESFilmicToneMapping;
@@ -157,30 +151,23 @@ function createStage(canvas, { path, sphere, linkSize, maxLinks, driftPerSecond,
   const keyLight = new DirectionalLight('#ffffff', 1.3);
   keyLight.position.set(300, 500, 600);
   scene.add(keyLight);
+  const rimLight = new DirectionalLight('#ffffff', 0.8);
+  rimLight.position.set(-400, 200, -500);
+  scene.add(rimLight);
 
   const camera = new PerspectiveCamera(FOV, 1, 1, 6000);
-  const chain = createChain(linkSize, maxLinks);
-  scene.add(chain.mesh);
-  if (sphere) scene.add(sphere.group);
-
+  const chainMaterial = new MeshStandardMaterial({
+    color: tint,
+    metalness: 1,
+    roughness: 0.2,
+    emissive: new Color(tint).multiplyScalar(0.08),
+  });
   const still = reducedMotion();
-  const tint = new Color('#ffffff');
-  let bands = [];
-  const point = new Vector3();
-  const basis = new Matrix4();
-  const matrix = new Matrix4();
-  const quaternion = new Quaternion();
-  const quarterTurn = new Quaternion().setFromAxisAngle(UP, Math.PI / 2);
-  const unit = new Vector3(1, 1, 1);
+  const parts = build({ scene, chainMaterial, still });
 
-  let curve = null;
-  let frames = null;
-  let length = 1;
-  let links = 0;
+  const clock = { elapsed: 0 };
   let viewport = { width: 1, height: 1 };
-  let elapsed = 0;
 
-  // Coordonatele 3D sunt pixeli din pagină: x față de mijlocul ecranului, y în jos devine y negativ.
   function layout() {
     viewport = { width: canvas.clientWidth, height: canvas.clientHeight };
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isSmallScreen() ? 1 : 1.75));
@@ -188,54 +175,13 @@ function createStage(canvas, { path, sphere, linkSize, maxLinks, driftPerSecond,
     camera.aspect = viewport.width / viewport.height;
     camera.position.z = viewport.height / 2 / Math.tan((FOV * Math.PI) / 360);
     camera.updateProjectionMatrix();
-
-    const points = path(viewport).map(([x, y, z]) => new Vector3(x, -y, z));
-    curve = new CatmullRomCurve3(points, false, 'centripetal');
-    curve.arcLengthDivisions = 2000;
-    length = curve.getLength();
-    frames = curve.computeFrenetFrames(FRAME_SAMPLES, false);
-    links = Math.min(maxLinks, Math.ceil(length / chain.pitch));
-    bands = [...document.querySelectorAll('[data-band]')].map((element) => ({
-      box: pageBox(element),
-      color: LIGHTS[element.dataset.band] ?? LIGHTS.white,
-    }));
-    if (sphere) sphere.layout(viewport);
-  }
-
-  // Culoarea luminii: a secțiunii aflate în mijlocul ecranului.
-  function bandColor() {
-    const middle = window.scrollY + viewport.height / 2;
-    return bands.find(({ box }) => middle >= box.top && middle < box.bottom)?.color ?? LIGHTS.white;
+    parts.layout(viewport);
   }
 
   function update(delta) {
-    elapsed += delta;
+    if (!still) clock.elapsed += delta;
     camera.position.set(0, -(window.scrollY + viewport.height / 2), camera.position.z);
-
-    // Scroll-ul „trage” de lanț: zalele alunecă de-a lungul curbei.
-    const offset = still ? 0 : ((window.scrollY * scrollPull + elapsed * driftPerSecond) / length) % 1;
-    for (let i = 0; i < links; i += 1) {
-      const t = (i / links + offset) % 1;
-      const frame = Math.round(t * FRAME_SAMPLES);
-      curve.getPointAt(t, point);
-      // Axa lungă a zalei (y) urmează curba. Ordinea (binormală, tangentă, normală) dă o rotație
-      // corectă; cu (normală, tangentă, binormală) baza ar fi în oglindă.
-      basis.makeBasis(frames.binormals[frame], frames.tangents[frame], frames.normals[frame]);
-      quaternion.setFromRotationMatrix(basis);
-      // Fiecare a doua za e rotită cu 90°, ca zalele să se prindă una de alta.
-      if (i % 2) quaternion.multiply(quarterTurn);
-      matrix.compose(point, quaternion, unit);
-      chain.mesh.setMatrixAt(i, matrix);
-    }
-    chain.mesh.count = links;
-    chain.mesh.instanceMatrix.needsUpdate = true;
-
-    tint.lerp(bandColor(), still ? 1 : Math.min(1, delta * 4));
-    // Cromul preia culoarea secțiunii: reflexiile sunt colorate, iar o strălucire slabă o întărește.
-    chain.material.color.copy(tint);
-    chain.material.emissive.copy(tint).multiplyScalar(0.08);
-    keyLight.color.copy(tint);
-    if (sphere && !still) sphere.animate(delta, window.scrollY);
+    parts.update({ time: clock.elapsed, scrollY: window.scrollY });
   }
 
   let last = performance.now();
@@ -274,83 +220,154 @@ function createStage(canvas, { path, sphere, linkSize, maxLinks, driftPerSecond,
   render();
 }
 
-// Prima pagină: lanțul înconjoară sfera de postere din hero, apoi coboară prin toate secțiunile.
-export function startHomeScene({ canvas, stage, posterUrls }) {
-  const small = isSmallScreen();
-  const group = createPosterSphere(posterUrls, small ? 24 : 36);
-  let radius = 1;
+// ---------- Prima pagină ----------
 
-  const sphere = {
-    group,
-    layout(viewport) {
-      const box = pageBox(stage);
-      radius = Math.min(box.width, box.height) * 0.36;
-      group.position.set(box.centerX - viewport.width / 2, -(box.top + box.height / 2), 0);
-      group.scale.setScalar(radius);
-    },
-    animate(delta, scrollY) {
-      group.rotation.y += delta * 0.25;
-      group.rotation.x = 0.25 + scrollY * 0.0006;
-    },
-  };
+// Posterele agățate de lanțul de pe orbită: o ramă închisă, imaginea și un cârlig metalic.
+function createHangingPosters(scene, posterUrls, count) {
+  const loader = new TextureLoader();
+  const frameMaterial = new MeshBasicMaterial({ color: '#0c0c0f', side: DoubleSide });
+  const hookMaterial = new MeshStandardMaterial({ color: '#d4d4d8', metalness: 1, roughness: 0.25 });
+  const imageGeometry = new PlaneGeometry(1, 1.5);
+  const frameGeometry = new PlaneGeometry(1.08, 1.58);
+  const hookGeometry = new CylinderGeometry(0.02, 0.02, 1, 8);
 
-  const sections = () => [...document.querySelectorAll('[data-band]')].map(pageBox);
+  const materials = posterUrls.map((url) => {
+    const texture = loader.load(url);
+    texture.colorSpace = SRGBColorSpace;
+    texture.anisotropy = 4;
+    return new MeshBasicMaterial({ map: texture, side: DoubleSide });
+  });
 
-  function path(viewport) {
-    const vw = viewport.width;
-    const [hero, ranking, catalog, final] = sections();
-    const box = pageBox(stage);
-    const cx = box.centerX - vw / 2;
-    const cy = box.top + box.height / 2;
-    const r = Math.min(box.width, box.height) * 0.36;
-    return [
-      [-vw * 0.8, hero.top + hero.height * 0.1, -150],
-      [-vw * 0.32, cy - r * 1.6, 120],
-      [cx - r * 1.35, cy - r * 0.15, 220],
-      [cx - r * 0.2, cy - r * 0.8, -260],
-      [cx + r * 1.3, cy - r * 0.25, -60],
-      [cx + r * 0.6, cy + r * 0.85, 260],
-      [cx - r * 0.9, cy + r * 0.6, 180],
-      [-vw * 0.38, ranking.top + ranking.height * 0.15, -40],
-      [vw * 0.42, ranking.top + ranking.height * 0.6, 80],
-      [vw * 0.44, catalog.top + 140, -60],
-      [-vw * 0.46, catalog.top + catalog.height * 0.5, 100],
-      [-vw * 0.22, final.top + final.height * 0.3, 160],
-      [vw * 0.3, final.top + final.height * 0.75, -80],
-      [vw * 0.85, final.bottom + 160, 0],
-    ];
-  }
+  return Array.from({ length: count }, (_, i) => {
+    const card = new Group();
+    const frame = new Mesh(frameGeometry, frameMaterial);
+    frame.position.z = -0.6;
+    const image = new Mesh(imageGeometry, materials[i % materials.length]);
+    card.add(frame, image);
 
-  createStage(canvas, {
-    path,
-    sphere,
-    linkSize: small ? 20 : 34,
-    maxLinks: 400,
-    driftPerSecond: 14,
-    scrollPull: 0.6,
+    const hook = new Mesh(hookGeometry, hookMaterial);
+    scene.add(card, hook);
+    return { card, hook };
   });
 }
 
-// Autentificare și cont nou: doar lanțul, pe diagonală, în spatele formularului.
+export function startHomeScene({ canvas, stage, posterUrls }) {
+  const small = isSmallScreen();
+  const linkSize = small ? 18 : 28;
+
+  createStage(canvas, '#ffffff', ({ scene, chainMaterial, still }) => {
+    // Sfera din mijloc: netedă, ca o perlă închisă la culoare, cu irizații fine.
+    const sphere = new Mesh(
+      new SphereGeometry(1, 96, 64),
+      new MeshPhysicalMaterial({
+        color: '#15151c',
+        metalness: 0.9,
+        roughness: 0.22,
+        clearcoat: 1,
+        clearcoatRoughness: 0.18,
+        iridescence: 0.7,
+        iridescenceIOR: 1.6,
+      }),
+    );
+    scene.add(sphere);
+
+    // Două inele subțiri, luminoase, în jurul sferei (ca liniile de orbită ale unei planete).
+    const ringMaterial = new MeshBasicMaterial({ color: '#e63946', transparent: true, opacity: 0.4 });
+    const rings = [new Mesh(new TorusGeometry(1, 0.006, 8, 160), ringMaterial), new Mesh(new TorusGeometry(1, 0.004, 8, 160), ringMaterial)];
+    scene.add(...rings);
+
+    const orbit = createChainLine(scene, { linkSize, maxLinks: 160, material: chainMaterial, closed: true });
+    const posters = createHangingPosters(scene, posterUrls, small ? 6 : 8);
+
+    const center = new Vector3();
+    const spot = new Vector3();
+    let radius = 1;
+    let orbitRadius = 1;
+    let posterWidth = 1;
+
+    return {
+      layout(viewport) {
+        const vw = viewport.width;
+        const box = pageBox(stage);
+        radius = Math.min(box.width, box.height) * 0.27;
+        orbitRadius = Math.min(radius * 2.05, vw * (small ? 0.34 : 0.42));
+        posterWidth = radius * (small ? 0.5 : 0.56);
+        center.set(box.centerX - vw / 2, -(box.top + box.height * 0.4), 0);
+
+        sphere.position.copy(center);
+        sphere.scale.setScalar(radius);
+        rings[0].position.copy(center);
+        rings[0].scale.setScalar(radius * 1.35);
+        rings[0].rotation.set(Math.PI / 2 - 0.35, 0.15, 0);
+        rings[1].position.copy(center);
+        rings[1].scale.setScalar(radius * 2.25);
+        rings[1].rotation.set(Math.PI / 2 - 0.2, -0.25, 0);
+
+        // Orbita lanțului: un cerc înclinat, cu partea din față mai jos și mai aproape de privitor.
+        const tilt = new Matrix4().makeRotationX(0.38).multiply(new Matrix4().makeRotationZ(-0.12));
+        const points = Array.from({ length: 24 }, (_, k) => {
+          const angle = (k / 24) * Math.PI * 2;
+          return new Vector3(Math.cos(angle) * orbitRadius, 0, Math.sin(angle) * orbitRadius)
+            .applyMatrix4(tilt)
+            .add(center);
+        });
+        orbit.setPath(points);
+
+        for (const { card } of posters) card.scale.set(posterWidth, posterWidth, 1);
+      },
+
+      update({ time, scrollY }) {
+        if (!still) {
+          sphere.rotation.y = time * 0.15;
+          rings[0].rotation.z = time * 0.05;
+          rings[1].rotation.z = -time * 0.035;
+        }
+
+        // Orbita se rotește încet; scroll-ul o împinge puțin mai repede.
+        const orbitOffset = still ? 0 : time * 0.02 + scrollY * 0.00012;
+        orbit.place(orbitOffset);
+
+        // Posterele stau agățate la distanțe egale pe orbită, mereu cu fața spre privitor.
+        const hookLength = posterWidth * 0.35;
+        posters.forEach(({ card, hook }, j) => {
+          const t = (((j / posters.length + orbitOffset) % 1) + 1) % 1;
+          orbit.curve.getPointAt(t, spot);
+          hook.position.set(spot.x, spot.y - hookLength / 2, spot.z);
+          hook.scale.set(posterWidth, hookLength, posterWidth);
+          card.position.set(spot.x, spot.y - hookLength - posterWidth * 0.75, spot.z);
+          const angle = t * Math.PI * 2;
+          card.rotation.set(0, -Math.cos(angle) * 0.45, still ? 0 : Math.sin(time * 1.3 + j) * 0.05);
+        });
+      },
+    };
+  });
+}
+
+// ---------- Autentificare și cont nou ----------
+
+// Doar un lanț roșiatic, pe diagonală, în spatele formularului.
 export function startAuthScene({ canvas }) {
   const small = isSmallScreen();
-  createStage(canvas, {
-    path(viewport) {
-      const vw = viewport.width;
-      const height = Math.max(document.documentElement.scrollHeight, viewport.height);
-      return [
-        [-vw * 0.8, height * 0.12, -120],
-        [-vw * 0.15, height * 0.28, 160],
-        [vw * 0.32, height * 0.42, -140],
-        [-vw * 0.25, height * 0.68, 140],
-        [vw * 0.2, height * 0.86, -60],
-        [vw * 0.85, height * 0.98, 0],
-      ];
-    },
-    sphere: null,
-    linkSize: small ? 20 : 32,
-    maxLinks: 200,
-    driftPerSecond: 40,
-    scrollPull: 0.6,
+  createStage(canvas, '#ff4655', ({ scene, chainMaterial, still }) => {
+    const chain = createChainLine(scene, { linkSize: small ? 20 : 32, maxLinks: 200, material: chainMaterial, closed: false });
+    return {
+      layout(viewport) {
+        const vw = viewport.width;
+        const height = Math.max(document.documentElement.scrollHeight, viewport.height);
+        chain.setPath(
+          [
+            [-vw * 0.8, height * 0.12, -120],
+            [-vw * 0.15, height * 0.28, 160],
+            [vw * 0.32, height * 0.42, -140],
+            [-vw * 0.25, height * 0.68, 140],
+            [vw * 0.2, height * 0.86, -60],
+            [vw * 0.85, height * 0.98, 0],
+          ].map(toWorld),
+        );
+      },
+      update({ time, scrollY }) {
+        chain.place(still ? 0 : (scrollY * 0.6 + time * 40) / chain.length);
+      },
+    };
   });
 }

@@ -62,6 +62,15 @@ function rankRow(film, index) {
   return item;
 }
 
+// Banda de film dintre secțiuni: titlurile defilează la nesfârșit. Lista e pusă de două ori,
+// iar animația CSS o mută exact cu jumătate, ca bucla să nu aibă „cusătură”.
+function fillFilmStrip(films) {
+  const titles = films.map((film) => film.title);
+  document.querySelector('[data-strip]').replaceChildren(
+    ...[...titles, ...titles].flatMap((title) => [element('span', '', title), element('span', 'strip-dot', '✦')]),
+  );
+}
+
 // Antetul e transparent peste secțiunea deschisă și devine închis după ce derulezi.
 function watchHeader() {
   const header = document.querySelector('[data-header]');
@@ -114,6 +123,7 @@ async function main() {
     ]);
 
     document.querySelector('[data-film-count]').textContent = String(best.total);
+    fillFilmStrip(best.films);
     const top = best.films.filter((film) => film.rating.count > 0).slice(0, 5);
     document.querySelector('[data-top-row]').replaceChildren(...top.map(rankRow));
 

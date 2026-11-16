@@ -19,7 +19,7 @@
   <canvas class="scene-canvas" data-scene aria-hidden="true"></canvas>
 
   <main>
-    <section class="band band--light hero3d" data-band="white">
+    <section class="band band--light hero3d">
       <div class="container hero3d-top">
         <div>
           <h1 class="hero3d-title">Filme de văzut.<br>Filme văzute.<br>Toate într-un loc.</h1>
@@ -38,7 +38,11 @@
       <p class="wordmark" aria-hidden="true">Filmoteca</p>
     </section>
 
-    <section class="band band--graphite" data-band="red" aria-labelledby="top-heading">
+    <div class="film-strip" aria-hidden="true">
+      <div class="film-strip-track" data-strip></div>
+    </div>
+
+    <section class="band band--graphite" aria-labelledby="top-heading">
       <div class="container">
         <p class="eyebrow">01 — Clasament</p>
         <h2 class="band-title" id="top-heading">Cele mai apreciate</h2>
@@ -46,7 +50,7 @@
       </div>
     </section>
 
-    <section class="band band--dark" id="catalog" data-band="cyan" aria-labelledby="catalog-heading">
+    <section class="band band--dark" id="catalog" aria-labelledby="catalog-heading">
       <div class="container">
         <p class="eyebrow">02 — Catalog</p>
         <div class="page-head">
@@ -83,7 +87,7 @@
       </div>
     </section>
 
-    <section class="band band--red" data-band="cyan" aria-labelledby="cta-heading">
+    <section class="band band--red" aria-labelledby="cta-heading">
       <div class="container cta-grid">
         <div>
           <h2 class="cta-title" id="cta-heading">Hai să-ți facem<br>lista de filme.</h2>
