@@ -266,7 +266,7 @@ a.btn {
 
 /* Ordinea straturilor: fundalul secțiunii (::before, z-index -2) → scena 3D (-1) → textul.
    Secțiunile nu au voie să creeze propriul „stacking context” (fără z-index, transform, opacity),
-   altfel lanțul ar ajunge în spatele fundalurilor lor. */
+   altfel pelicula ar ajunge în spatele fundalurilor lor. */
 .scene-canvas {
   position: fixed;
   inset: 0;

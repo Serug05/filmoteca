@@ -1,20 +1,20 @@
 // Grafica 3D (doar decor).
-// Prima pagină: o sferă lucioasă în mijloc, înconjurată de un lanț cromat pe orbită, cu posterele
-// filmelor agățate de el. Autentificarea: un lanț roșiatic, pe diagonală, în spatele formularului.
+// Prima pagină: o sferă lucioasă în mijloc, înconjurată de o bandă de film retro pe orbită.
+// Autentificarea: aceeași peliculă, ca o panglică ce șerpuiește prin pagină în spatele formularului.
 import {
   ACESFilmicToneMapping,
   AmbientLight,
   BackSide,
   BoxGeometry,
+  BufferGeometry,
   CanvasTexture,
   CatmullRomCurve3,
   Color,
   CylinderGeometry,
   DirectionalLight,
   DoubleSide,
+  Float32BufferAttribute,
   Group,
-  InstancedMesh,
-  Matrix4,
   Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
@@ -22,7 +22,7 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   PMREMGenerator,
-  Quaternion,
+  RepeatWrapping,
   Scene,
   SphereGeometry,
   SRGBColorSpace,
@@ -31,9 +31,7 @@ import {
   WebGLRenderer,
 } from '/vendor/three/three.module.js';
 
-const UP = new Vector3(0, 1, 0);
 const FOV = 35;
-const FRAME_SAMPLES = 600;
 
 export function supportsWebGL() {
   try {
@@ -57,8 +55,8 @@ function pageBox(element) {
 // Coordonatele 3D sunt pixeli din pagină: x față de mijlocul ecranului, iar y în jos devine y negativ.
 const toWorld = ([x, y, z]) => new Vector3(x, -y, z);
 
-// Un „studio” virtual: o cameră gri cu panouri luminoase. Metalul și sfera îl reflectă;
-// fără el, cromul ar ieși negru.
+// Un „studio” virtual: o cameră gri cu panouri luminoase. Sfera îl reflectă;
+// fără el, metalul ar ieși negru.
 function studioEnvironment(renderer) {
   const studio = new Scene();
   studio.add(new Mesh(new BoxGeometry(10, 10, 10), new MeshBasicMaterial({ color: new Color(0.32, 0.32, 0.36), side: BackSide })));
@@ -86,60 +84,8 @@ function studioEnvironment(renderer) {
   return texture;
 }
 
-// Un lanț de-a lungul unei curbe. Toate zalele lui sunt desenate dintr-o dată (InstancedMesh).
-// O za este un tor (inel) întins pe verticală; fiecare a doua za e rotită cu 90°, ca să se prindă.
-function createChainLine(scene, { linkSize, maxLinks, material, closed }) {
-  const geometry = new TorusGeometry(0.5, 0.13, 12, 36);
-  geometry.scale(linkSize, linkSize * 1.6, linkSize);
-  const mesh = new InstancedMesh(geometry, material, maxLinks);
-  mesh.frustumCulled = false;
-  scene.add(mesh);
-
-  // Distanța dintre zale e puțin mai mică decât golul din interiorul unei zale.
-  const pitch = linkSize * 1.05;
-  const point = new Vector3();
-  const basis = new Matrix4();
-  const matrix = new Matrix4();
-  const quaternion = new Quaternion();
-  const quarterTurn = new Quaternion().setFromAxisAngle(UP, Math.PI / 2);
-  const unit = new Vector3(1, 1, 1);
-  const line = { curve: null, frames: null, length: 1, count: 0 };
-
-  line.setPath = (points) => {
-    line.curve = new CatmullRomCurve3(points, closed, 'centripetal');
-    line.curve.arcLengthDivisions = 2000;
-    line.length = line.curve.getLength();
-    line.frames = line.curve.computeFrenetFrames(FRAME_SAMPLES, closed);
-    // Pe o buclă închisă, numărul de zale e par, ca alternanța să se lege la capăt.
-    const count = Math.round(line.length / pitch);
-    line.count = Math.min(maxLinks, closed ? count - (count % 2) : count);
-  };
-
-  // offset ∈ [0, 1): cât de mult au alunecat zalele de-a lungul curbei.
-  line.place = (offset) => {
-    const { curve, frames, count } = line;
-    for (let i = 0; i < count; i += 1) {
-      const t = (((i / count + offset) % 1) + 1) % 1;
-      const frame = Math.round(t * FRAME_SAMPLES);
-      curve.getPointAt(t, point);
-      // Axa lungă a zalei (y) urmează curba. Ordinea (binormală, tangentă, normală) dă o rotație
-      // corectă; cu (normală, tangentă, binormală) baza ar fi în oglindă.
-      basis.makeBasis(frames.binormals[frame], frames.tangents[frame], frames.normals[frame]);
-      quaternion.setFromRotationMatrix(basis);
-      if (i % 2) quaternion.multiply(quarterTurn);
-      matrix.compose(point, quaternion, unit);
-      mesh.setMatrixAt(i, matrix);
-    }
-    mesh.count = count;
-    mesh.instanceMatrix.needsUpdate = true;
-  };
-
-  return line;
-}
-
 // Motorul comun: randare, lumini și camera care urmărește scroll-ul.
-// `tint` e culoarea cromului: reflexiile lanțului o preiau, iar o strălucire slabă o întărește.
-function createStage(canvas, tint, build) {
+function createStage(canvas, build) {
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = ACESFilmicToneMapping;
@@ -156,14 +102,9 @@ function createStage(canvas, tint, build) {
   scene.add(rimLight);
 
   const camera = new PerspectiveCamera(FOV, 1, 1, 6000);
-  const chainMaterial = new MeshStandardMaterial({
-    color: tint,
-    metalness: 1,
-    roughness: 0.2,
-    emissive: new Color(tint).multiplyScalar(0.08),
-  });
   const still = reducedMotion();
-  const parts = build({ scene, chainMaterial, still });
+  // `invalidate` cere un cadru nou, de exemplu când posterele au ajuns în textură.
+  const parts = build({ scene, still, invalidate: () => requestRender() });
 
   const clock = { elapsed: 0 };
   let viewport = { width: 1, height: 1 };
@@ -220,7 +161,7 @@ function createStage(canvas, tint, build) {
   render();
 }
 
-// ---------- Prima pagină ----------
+// ---------- Pelicula retro (prima pagină și autentificarea) ----------
 
 // Banda de film retro: o peliculă de 35 mm desenată într-un canvas 2D și folosită ca textură.
 // Cadrele sunt posterele filmelor (în tonuri sepia), cu perforații pe margini, marcaje portocalii,
@@ -354,8 +295,8 @@ function drawFilmStrip(ctx, images) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
-// Banda: un cilindru deschis (fără capace), ușor ondulat, cu pelicula ca textură de jur împrejur.
-function createFilmBand(scene, posterUrls) {
+// Pelicula ca textură. Cadrele rămân goale până se încarcă posterele.
+function createFilmTexture(posterUrls, onReady) {
   const canvas = document.createElement('canvas');
   canvas.width = FILM.frames * FILM.cell;
   canvas.height = FILM.height;
@@ -365,13 +306,36 @@ function createFilmBand(scene, posterUrls) {
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = 8;
-  Promise.all(posterUrls.slice(0, FILM.frames).map(loadImage)).then((images) => {
-    drawFilmStrip(ctx, images.filter(Boolean));
-    texture.needsUpdate = true;
-  });
+  if (posterUrls.length) {
+    Promise.all(posterUrls.slice(0, FILM.frames).map(loadImage)).then((images) => {
+      drawFilmStrip(ctx, images.filter(Boolean));
+      texture.needsUpdate = true;
+      onReady();
+    });
+  }
+  return texture;
+}
 
+// Pelicula își are propria lumină (emissive), ca să nu se piardă pe fundalul închis.
+// Perforațiile sunt transparente în textură, iar `alphaTest` le decupează de tot.
+function filmMaterial(texture) {
+  return new MeshStandardMaterial({
+    map: texture,
+    emissiveMap: texture,
+    emissive: '#ffffff',
+    emissiveIntensity: 0.45,
+    roughness: 0.4,
+    metalness: 0,
+    envMapIntensity: 0.6,
+    alphaTest: 0.5,
+    side: DoubleSide,
+  });
+}
+
+// Banda: un cilindru deschis (fără capace), ușor ondulat, cu pelicula ca textură de jur împrejur.
+function createFilmBand(scene, texture) {
   // Înălțimea benzii păstrează proporțiile texturii pe circumferința cercului (raza 1).
-  const bandHeight = (2 * Math.PI * FILM.height) / canvas.width;
+  const bandHeight = (2 * Math.PI * FILM.height) / (FILM.frames * FILM.cell);
   const geometry = new CylinderGeometry(1, 1, bandHeight, 180, 1, true);
   const positions = geometry.getAttribute('position');
   for (let i = 0; i < positions.count; i += 1) {
@@ -379,20 +343,7 @@ function createFilmBand(scene, posterUrls) {
     positions.setY(i, positions.getY(i) + Math.sin(angle * 3) * 0.035);
   }
 
-  const band = new Mesh(
-    geometry,
-    new MeshStandardMaterial({
-      map: texture,
-      emissiveMap: texture,
-      emissive: '#ffffff',
-      emissiveIntensity: 0.45,
-      roughness: 0.4,
-      metalness: 0,
-      envMapIntensity: 0.6,
-      alphaTest: 0.5,
-      side: DoubleSide,
-    }),
-  );
+  const band = new Mesh(geometry, filmMaterial(texture));
 
   // Înclinarea orbitei: partea din față a benzii e mai jos și mai aproape de privitor.
   const group = new Group();
@@ -402,10 +353,68 @@ function createFilmBand(scene, posterUrls) {
   return { group, band };
 }
 
+// Panglica: pelicula întinsă de-a lungul unei curbe. Lățimea stă în planul ecranului, iar
+// o răsucire lentă o întoarce din loc în loc pe muchie, ca pe o bandă de film adevărată.
+// Textura se repetă pe lungime; mutarea ei face filmul să „ruleze”.
+function createFilmRibbon(scene, texture, { width, samples = 480 }) {
+  texture.wrapS = RepeatWrapping;
+  const geometry = new BufferGeometry();
+  const mesh = new Mesh(geometry, filmMaterial(texture));
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+
+  // Cât de lungă e o tură completă a texturii (toate cadrele), pentru lățimea dată.
+  const repeatLength = (width * FILM.frames * FILM.cell) / FILM.height;
+  const point = new Vector3();
+  const tangent = new Vector3();
+  const side = new Vector3();
+
+  const indices = [];
+  for (let i = 0; i < samples; i += 1) {
+    const a = i * 2;
+    indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+  }
+  geometry.setIndex(indices);
+
+  return {
+    setPath(points) {
+      const curve = new CatmullRomCurve3(points, false, 'centripetal');
+      curve.arcLengthDivisions = 2000;
+      const length = curve.getLength();
+      const positions = new Float32Array((samples + 1) * 6);
+      const uvs = new Float32Array((samples + 1) * 4);
+
+      for (let i = 0; i <= samples; i += 1) {
+        const t = i / samples;
+        curve.getPointAt(t, point);
+        curve.getTangentAt(t, tangent);
+        side.set(tangent.y, -tangent.x, 0).normalize();
+        side.applyAxisAngle(tangent, Math.sin(t * Math.PI * 2.6) * 0.75);
+        const u = (t * length) / repeatLength;
+        // Marginea de jos (v = 0) și cea de sus (v = 1) a peliculei.
+        positions.set(point.clone().addScaledVector(side, width / 2).toArray(), i * 6);
+        positions.set(point.clone().addScaledVector(side, -width / 2).toArray(), i * 6 + 3);
+        uvs.set([u, 0, u, 1], i * 4);
+      }
+
+      geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+      geometry.computeVertexNormals();
+    },
+
+    // distance: câți pixeli a rulat filmul de-a lungul curbei.
+    slide(distance) {
+      texture.offset.x = -distance / repeatLength;
+    },
+  };
+}
+
+// ---------- Prima pagină ----------
+
 export function startHomeScene({ canvas, stage, posterUrls }) {
   const small = isSmallScreen();
 
-  createStage(canvas, '#ffffff', ({ scene, still }) => {
+  createStage(canvas, ({ scene, still, invalidate }) => {
     // Sfera din mijloc: netedă, ca o perlă închisă la culoare, cu irizații fine.
     const sphere = new Mesh(
       new SphereGeometry(1, 96, 64),
@@ -426,7 +435,7 @@ export function startHomeScene({ canvas, stage, posterUrls }) {
     const rings = [new Mesh(new TorusGeometry(1, 0.006, 8, 160), ringMaterial), new Mesh(new TorusGeometry(1, 0.004, 8, 160), ringMaterial)];
     scene.add(...rings);
 
-    const film = createFilmBand(scene, posterUrls);
+    const film = createFilmBand(scene, createFilmTexture(posterUrls, invalidate));
 
     return {
       layout(viewport) {
@@ -463,28 +472,32 @@ export function startHomeScene({ canvas, stage, posterUrls }) {
 
 // ---------- Autentificare și cont nou ----------
 
-// Doar un lanț roșiatic, pe diagonală, în spatele formularului.
-export function startAuthScene({ canvas }) {
+// Pelicula intră din stânga sus, trece pe după formular, se întoarce larg pe dreapta,
+// apoi pe stânga și iese în dreapta jos.
+export function startAuthScene({ canvas, posterUrls }) {
   const small = isSmallScreen();
-  createStage(canvas, '#ff4655', ({ scene, chainMaterial, still }) => {
-    const chain = createChainLine(scene, { linkSize: small ? 20 : 32, maxLinks: 200, material: chainMaterial, closed: false });
+  createStage(canvas, ({ scene, still, invalidate }) => {
+    const ribbon = createFilmRibbon(scene, createFilmTexture(posterUrls, invalidate), { width: small ? 70 : 112 });
     return {
       layout(viewport) {
         const vw = viewport.width;
         const height = Math.max(document.documentElement.scrollHeight, viewport.height);
-        chain.setPath(
+        ribbon.setPath(
           [
-            [-vw * 0.8, height * 0.12, -120],
-            [-vw * 0.15, height * 0.28, 160],
-            [vw * 0.32, height * 0.42, -140],
-            [-vw * 0.25, height * 0.68, 140],
-            [vw * 0.2, height * 0.86, -60],
-            [vw * 0.85, height * 0.98, 0],
+            [-vw * 0.8, height * 0.1, -120],
+            [-vw * 0.2, height * 0.24, 140],
+            [vw * 0.28, height * 0.34, -100],
+            [vw * 0.42, height * 0.5, 0],
+            [vw * 0.1, height * 0.64, 140],
+            [-vw * 0.3, height * 0.72, 40],
+            [-vw * 0.26, height * 0.86, -80],
+            [vw * 0.25, height * 0.93, -40],
+            [vw * 0.85, height * 1.0, 0],
           ].map(toWorld),
         );
       },
       update({ time, scrollY }) {
-        chain.place(still ? 0 : (scrollY * 0.6 + time * 40) / chain.length);
+        ribbon.slide(still ? 0 : scrollY * 0.6 + time * 40);
       },
     };
   });

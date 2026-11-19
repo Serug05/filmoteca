@@ -22,7 +22,7 @@ Adminul **nu** poate: vedea listele private ale altora, scrie sau edita recenzii
 - **Parole:** Argon2id · **Sesiuni:** token aleator în cookie `HttpOnly`, salvat ca hash în baza de date
 - **Validare:** zod · **Antete de securitate:** helmet (cu Content Security Policy)
 - **Postere:** multer (primire, max. 2 MB) + sharp (verifică imaginea și o reface ca WebP, fără metadate)
-- **Grafică 3D (doar decor):** Three.js, servit de pe propriul server: pe prima pagină, o sferă lucioasă înconjurată de o bandă de film retro de 35 mm (perforații, cadre sepia cu posterele filmelor, zgârieturi și granulație), desenată în browser (`public/js/scene3d.js`). Fără WebGL sau cu „animații reduse” activat în sistem, pagina rămâne statică.
+- **Grafică 3D (doar decor):** Three.js, servit de pe propriul server: pe prima pagină, o sferă lucioasă înconjurată de o bandă de film retro de 35 mm (perforații, cadre sepia cu posterele filmelor, zgârieturi și granulație), desenată în browser (`public/js/scene3d.js`); la autentificare și la contul nou, aceeași peliculă șerpuiește în spatele formularului. Fără WebGL sau cu „animații reduse” activat în sistem, pagina rămâne statică.
 - **Teste:** `node --test` + supertest
 
 ## Rulare
